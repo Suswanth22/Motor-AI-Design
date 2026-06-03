@@ -1,0 +1,3000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Motor Design Engineer — NEMA/IEC WEG & Marathon</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500&display=swap');
+
+  :root {
+    --bg-void: #060a0f;
+    --bg-panel: #0b1118;
+    --bg-surface: #0f1820;
+    --bg-elevated: #162232;
+    --border-dim: #1e3048;
+    --border-med: #2a4a6b;
+    --border-active: #1e7fc4;
+    --amber: #f5a623;
+    --amber-dim: #c47e0f;
+    --amber-glow: rgba(245,166,35,0.12);
+    --blue: #1e9de8;
+    --blue-dim: #1470ab;
+    --blue-glow: rgba(30,157,232,0.12);
+    --cyan: #0ff4c6;
+    --cyan-glow: rgba(15,244,198,0.1);
+    --red: #ff4040;
+    --red-glow: rgba(255,64,64,0.12);
+    --green: #2ddf7a;
+    --text-primary: #c8dff0;
+    --text-secondary: #6a96b8;
+    --text-dim: #3d6080;
+    --mono: 'Share Tech Mono', monospace;
+    --condensed: 'Barlow Condensed', sans-serif;
+    --body: 'Barlow', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--body);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% -10%, rgba(30,100,180,0.08) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(30,72,107,0.15) 39px, rgba(30,72,107,0.15) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(30,72,107,0.08) 39px, rgba(30,72,107,0.08) 40px);
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 28px;
+    border-bottom: 1px solid var(--border-dim);
+    background: rgba(11,17,24,0.95);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .brand-icon {
+    width: 40px; height: 40px;
+    border: 2px solid var(--amber);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    background: var(--amber-glow);
+  }
+
+  .brand-icon svg { color: var(--amber); }
+
+  .brand-text h1 {
+    font-family: var(--condensed);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  .brand-text p {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .header-badges {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .badge-weg { background: rgba(30,157,232,0.15); border: 1px solid var(--blue-dim); color: var(--blue); }
+  .badge-marathon { background: rgba(245,166,35,0.12); border: 1px solid var(--amber-dim); color: var(--amber); }
+  .badge-nema { background: rgba(45,223,122,0.1); border: 1px solid #1e7045; color: var(--green); }
+  .badge-iec { background: rgba(15,244,198,0.08); border: 1px solid #0a7a63; color: var(--cyan); }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .app-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    height: calc(100vh - 65px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    border-right: 1px solid var(--border-dim);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-panel);
+  }
+
+  .sidebar-section {
+    border-bottom: 1px solid var(--border-dim);
+    padding: 14px 16px;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-dim);
+  }
+
+  /* Motor Spec Panel */
+  .spec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .spec-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .spec-field label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .spec-field input,
+  .spec-field select {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: 3px;
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 5px 8px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  .spec-field input:focus,
+  .spec-field select:focus {
+    border-color: var(--border-active);
+    box-shadow: 0 0 0 2px rgba(30,127,196,0.15);
+  }
+
+  .spec-field select option { background: var(--bg-surface); color: var(--text-primary); }
+
+  .spec-full { grid-column: 1 / -1; }
+
+  /* Quick Prompts */
+  .quick-prompts {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .qp-btn {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    font-family: var(--body);
+    font-size: 11px;
+    padding: 7px 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    line-height: 1.3;
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+  }
+
+  .qp-btn:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-active);
+    color: var(--text-primary);
+  }
+
+  .qp-btn .qp-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Standards Quick Ref */
+  .standards-list { display: flex; flex-direction: column; gap: 5px; }
+
+  .std-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+    background: var(--bg-surface);
+    border-radius: 3px;
+    border-left: 2px solid var(--border-med);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .std-item:hover { border-left-color: var(--blue); background: var(--bg-elevated); }
+
+  .std-item span:first-child { font-family: var(--mono); font-size: 11px; color: var(--blue); }
+  .std-item span:last-child { font-size: 10px; color: var(--text-dim); }
+
+  /* Sidebar scroll area */
+  .sidebar-scroll { overflow-y: auto; flex: 1; }
+  .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+  .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+  .sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border-dim); border-radius: 2px; }
+
+  /* ── MAIN CHAT AREA ── */
+  .main-area {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Sub-header tabs */
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--border-dim);
+    background: var(--bg-panel);
+    padding: 0 20px;
+    gap: 0;
+  }
+
+  .tab {
+    font-family: var(--condensed);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 18px;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+    white-space: nowrap;
+  }
+
+  .tab:hover { color: var(--text-secondary); }
+
+  .tab.active {
+    color: var(--amber);
+    border-bottom-color: var(--amber);
+  }
+
+  /* Chat messages */
+  .chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .chat-container::-webkit-scrollbar { width: 5px; }
+  .chat-container::-webkit-scrollbar-track { background: transparent; }
+  .chat-container::-webkit-scrollbar-thumb { background: var(--border-dim); border-radius: 2px; }
+
+  /* Welcome */
+  .welcome-block {
+    background: linear-gradient(135deg, var(--bg-elevated) 0%, rgba(22,34,50,0.6) 100%);
+    border: 1px solid var(--border-med);
+    border-radius: 8px;
+    padding: 22px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .welcome-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--amber), var(--blue), var(--cyan));
+  }
+
+  .welcome-block h2 {
+    font-family: var(--condensed);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .welcome-block p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 680px;
+  }
+
+  .capability-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .chip-a { background: rgba(30,157,232,0.1); border: 1px solid rgba(30,157,232,0.3); color: var(--blue); }
+  .chip-b { background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.25); color: var(--amber); }
+  .chip-c { background: rgba(15,244,198,0.08); border: 1px solid rgba(15,244,198,0.2); color: var(--cyan); }
+  .chip-d { background: rgba(45,223,122,0.08); border: 1px solid rgba(45,223,122,0.2); color: var(--green); }
+
+  /* Message bubbles */
+  .message {
+    display: flex;
+    gap: 14px;
+    max-width: 100%;
+    animation: msgFadeIn 0.3s ease;
+  }
+
+  @keyframes msgFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 34px; height: 34px;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: bold;
+    flex-shrink: 0;
+    letter-spacing: 0.5px;
+  }
+
+  .msg-avatar.ai {
+    background: linear-gradient(135deg, var(--amber-dim), var(--amber));
+    color: var(--bg-void);
+  }
+
+  .msg-avatar.user-av {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-med);
+    color: var(--text-secondary);
+  }
+
+  .msg-body { flex: 1; max-width: calc(100% - 48px); }
+
+  .msg-meta {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+  }
+
+  .message.user .msg-meta { text-align: right; }
+
+  .msg-content {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-primary);
+  }
+
+  .message.user .msg-content {
+    background: var(--bg-elevated);
+    border-color: var(--border-med);
+  }
+
+  .message.ai .msg-content {
+    border-left: 3px solid var(--amber);
+  }
+
+  /* Structured response sections */
+  .resp-section {
+    margin-top: 14px;
+    border: 1px solid var(--border-dim);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+
+  .resp-section-hdr {
+    background: var(--bg-elevated);
+    padding: 7px 12px;
+    font-family: var(--condensed);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .resp-section-body {
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+
+  .hdr-amber { color: var(--amber); }
+  .hdr-blue { color: var(--blue); }
+  .hdr-cyan { color: var(--cyan); }
+  .hdr-green { color: var(--green); }
+  .hdr-red { color: var(--red); }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 11px;
+    margin-top: 6px;
+  }
+
+  .data-table th {
+    background: rgba(30,72,107,0.3);
+    padding: 6px 10px;
+    text-align: left;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border-dim);
+    font-weight: normal;
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+
+  .data-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(30,72,107,0.2);
+    color: var(--text-primary);
+    vertical-align: top;
+  }
+
+  .data-table td.val { color: var(--cyan); }
+  .data-table td.warn { color: var(--amber); }
+  .data-table td.crit { color: var(--red); }
+  .data-table td.ok { color: var(--green); }
+
+  .data-table tr:last-child td { border-bottom: none; }
+
+  .alert-box {
+    border-radius: 4px;
+    padding: 10px 13px;
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .alert-warn { background: var(--amber-glow); border: 1px solid rgba(245,166,35,0.3); color: var(--amber); }
+  .alert-crit { background: var(--red-glow); border: 1px solid rgba(255,64,64,0.3); color: var(--red); }
+  .alert-info { background: var(--blue-glow); border: 1px solid rgba(30,157,232,0.25); color: var(--blue); }
+  .alert-ok { background: rgba(45,223,122,0.08); border: 1px solid rgba(45,223,122,0.25); color: var(--green); }
+
+  .inline-code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: rgba(30,72,107,0.35);
+    border: 1px solid var(--border-dim);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--cyan);
+  }
+
+  .formula-box {
+    background: rgba(22,34,50,0.8);
+    border: 1px solid var(--border-med);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    margin: 8px 0;
+    letter-spacing: 0.5px;
+  }
+
+  ul.eng-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  ul.eng-list li {
+    display: flex;
+    gap: 8px;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+
+  ul.eng-list li::before {
+    content: '▸';
+    color: var(--amber);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Loading indicator */
+  .typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 12px 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-left: 3px solid var(--amber);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .typing-dots { display: flex; gap: 4px; }
+  .typing-dots span {
+    width: 5px; height: 5px;
+    background: var(--amber);
+    border-radius: 50%;
+    animation: dotBounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes dotBounce {
+    0%,80%,100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ── INPUT AREA ── */
+  .input-area {
+    border-top: 1px solid var(--border-dim);
+    background: var(--bg-panel);
+    padding: 14px 20px;
+  }
+
+  .input-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .toolbar-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .context-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .ctx-chip {
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+    color: var(--text-dim);
+    background: var(--bg-surface);
+    border-color: var(--border-dim);
+  }
+
+  .ctx-chip:hover, .ctx-chip.active {
+    color: var(--blue);
+    border-color: var(--blue-dim);
+    background: var(--blue-glow);
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .input-wrap {
+    flex: 1;
+    position: relative;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: var(--body);
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 11px 14px;
+    resize: none;
+    outline: none;
+    min-height: 46px;
+    max-height: 140px;
+    overflow-y: auto;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  textarea::placeholder { color: var(--text-dim); }
+
+  textarea:focus {
+    border-color: var(--border-active);
+    box-shadow: 0 0 0 3px rgba(30,127,196,0.12);
+  }
+
+  .send-btn {
+    background: linear-gradient(135deg, var(--amber-dim), var(--amber));
+    border: none;
+    border-radius: 6px;
+    color: var(--bg-void);
+    cursor: pointer;
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .send-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+  .send-btn:active { transform: translateY(0); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Tab panels */
+  .tab-panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+  .tab-panel.active { display: flex; }
+
+  /* NEMA Standards Reference Panel */
+  .ref-panel {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .ref-panel::-webkit-scrollbar { width: 5px; }
+  .ref-panel::-webkit-scrollbar-thumb { background: var(--border-dim); border-radius: 2px; }
+
+  .ref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .ref-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-dim);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .ref-card-hdr {
+    background: var(--bg-elevated);
+    padding: 10px 14px;
+    font-family: var(--condensed);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .ref-card-body { padding: 12px 14px; }
+
+  .ref-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(30,72,107,0.15);
+    font-size: 12px;
+  }
+
+  .ref-row:last-child { border-bottom: none; }
+  .ref-row .rk { color: var(--text-secondary); }
+  .ref-row .rv { font-family: var(--mono); font-size: 11px; color: var(--cyan); }
+
+  /* Diagnostics panel */
+  .diag-panel {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .diag-matrix {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .diag-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-dim);
+    border-radius: 6px;
+    padding: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .diag-card:hover {
+    border-color: var(--border-active);
+    background: var(--bg-elevated);
+  }
+
+  .diag-card .dc-icon { font-size: 22px; margin-bottom: 8px; }
+  .diag-card .dc-label {
+    font-family: var(--condensed);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+
+  .diag-card .dc-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 3px;
+  }
+
+  .diag-result {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-dim);
+    border-radius: 6px;
+    padding: 16px;
+    display: none;
+  }
+
+  .diag-result.visible { display: block; }
+
+  /* History items */
+  .history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+  }
+
+  .history-list::-webkit-scrollbar { width: 3px; }
+  .history-list::-webkit-scrollbar-thumb { background: var(--border-dim); }
+
+  .hist-item {
+    padding: 8px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 11px;
+    color: var(--text-secondary);
+    border-left: 2px solid transparent;
+    margin-bottom: 2px;
+  }
+
+  .hist-item:hover {
+    background: var(--bg-elevated);
+    border-left-color: var(--amber);
+    color: var(--text-primary);
+  }
+
+  .hist-item .hi-time {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* Scrollbar reset */
+  *::-webkit-scrollbar { width: 5px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: var(--border-dim); border-radius: 2px; }
+
+  /* ── DIMENSIONAL STANDARDS PANEL ── */
+  .dim-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .dim-lookup-bar {
+    border-bottom: 1px solid var(--border-dim);
+    background: var(--bg-panel);
+    padding: 14px 20px;
+    flex-shrink: 0;
+  }
+
+  .dim-lookup-inner {}
+
+  .dim-header-text h3 {
+    font-family: var(--condensed);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+
+  .dim-header-text p {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .dim-lookup-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .dlc-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .dlc-group label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .dlc-group select {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: 4px;
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    outline: none;
+    cursor: pointer;
+    min-width: 140px;
+    transition: border-color 0.2s;
+  }
+
+  .dlc-group select:focus { border-color: var(--border-active); }
+  .dlc-group select option { background: var(--bg-surface); color: var(--text-primary); }
+
+  .toggle-switch-group {
+    display: flex;
+    border: 1px solid var(--border-dim);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .tsb {
+    background: var(--bg-surface);
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+
+  .tsb.active {
+    background: var(--amber-glow);
+    color: var(--amber);
+    border: 1px solid var(--amber-dim);
+    border-radius: 3px;
+  }
+
+  .dim-lookup-btn {
+    background: linear-gradient(135deg, #1470ab, var(--blue));
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-family: var(--condensed);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 7px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .dim-lookup-btn:hover { filter: brightness(1.15); }
+
+  .dim-results-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 22px;
+  }
+
+  .dim-results-area::-webkit-scrollbar { width: 5px; }
+  .dim-results-area::-webkit-scrollbar-thumb { background: var(--border-dim); }
+
+  /* Default state */
+  .dim-default-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .dim-default-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+
+  .dim-default-title {
+    font-family: var(--condensed);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  .dim-default-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    max-width: 480px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .dim-quick-examples {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .dim-eg {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 12px;
+    border: 1px solid var(--border-med);
+    border-radius: 20px;
+    color: var(--blue);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--blue-glow);
+  }
+
+  .dim-eg:hover {
+    border-color: var(--blue);
+    color: #fff;
+    background: rgba(30,157,232,0.2);
+  }
+
+  /* Report sections */
+  .dim-report-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .dim-report-full { grid-column: 1 / -1; }
+
+  .dim-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-dim);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .dim-card-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 13px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .dim-card-hdr-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--condensed);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .dim-card-hdr-right {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .dim-card-body { padding: 12px 13px; }
+
+  /* Dimension rows */
+  .dim-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(30,72,107,0.18);
+    font-size: 12px;
+  }
+
+  .dim-row:last-child { border-bottom: none; }
+
+  .dim-row .dr-key {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--amber);
+    font-weight: bold;
+  }
+
+  .dim-row .dr-desc { color: var(--text-secondary); font-size: 11.5px; }
+
+  .dim-row .dr-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .dim-row .dr-tol {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* Tolerance callout */
+  .tol-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .tol-tight { background: rgba(15,244,198,0.1); border: 1px solid rgba(15,244,198,0.25); color: var(--cyan); }
+  .tol-standard { background: rgba(30,157,232,0.1); border: 1px solid rgba(30,157,232,0.25); color: var(--blue); }
+  .tol-loose { background: var(--amber-glow); border: 1px solid rgba(245,166,35,0.25); color: var(--amber); }
+
+  /* Compliance banner */
+  .compliance-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 5px;
+    margin-bottom: 14px;
+    border: 1px solid;
+  }
+
+  .cb-ok { background: rgba(45,223,122,0.07); border-color: rgba(45,223,122,0.25); }
+  .cb-warn { background: var(--amber-glow); border-color: rgba(245,166,35,0.3); }
+
+  .cb-icon { font-size: 18px; }
+
+  .cb-text h4 {
+    font-family: var(--condensed);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .cb-ok .cb-text h4 { color: var(--green); }
+  .cb-warn .cb-text h4 { color: var(--amber); }
+  .cb-text p { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* Diagram canvas area */
+  .dim-diagram-area {
+    background: rgba(6,10,15,0.7);
+    border: 1px solid var(--border-dim);
+    border-radius: 5px;
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    overflow: hidden;
+  }
+
+  /* Special notes */
+  .enc-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .enc-note {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: var(--bg-surface);
+    border-left: 3px solid var(--border-med);
+  }
+
+  .enc-note.note-std { border-left-color: var(--blue); }
+  .enc-note.note-warn { border-left-color: var(--amber); }
+  .enc-note.note-crit { border-left-color: var(--red); }
+
+  .enc-note .en-icon { flex-shrink: 0; font-size: 13px; }
+  .enc-note .en-std { font-family: var(--mono); font-size: 10px; color: var(--text-dim); margin-left: auto; white-space: nowrap; padding-left: 8px; }
+
+  /* Report title bar */
+  .report-title-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .rtb-left h2 {
+    font-family: var(--condensed);
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  .rtb-left p {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .rtb-badges { display: flex; gap: 6px; align-items: center; }
+
+  .ask-ai-dim-btn {
+    background: linear-gradient(135deg, var(--amber-dim), var(--amber));
+    border: none;
+    border-radius: 4px;
+    color: var(--bg-void);
+    font-family: var(--condensed);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+
+  .ask-ai-dim-btn:hover { filter: brightness(1.15); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-brand">
+    <div class="brand-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>Motor Design AI</h1>
+      <p>NEMA MG1 · IEC 60034 · WEG · MARATHON · IEEE 112</p>
+    </div>
+  </div>
+  <div class="header-badges">
+    <span class="badge badge-weg">WEG</span>
+    <span class="badge badge-marathon">Marathon</span>
+    <span class="badge badge-nema">NEMA MG1</span>
+    <span class="badge badge-iec">IEC 60034</span>
+    <div class="status-dot" title="AI Engine Active"></div>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- Motor Spec Input -->
+    <div class="sidebar-section">
+      <div class="section-label">Motor Parameters</div>
+      <div class="spec-grid">
+        <div class="spec-field">
+          <label>Power (HP/kW)</label>
+          <input type="text" id="specPower" placeholder="e.g. 50 HP" />
+        </div>
+        <div class="spec-field">
+          <label>Voltage</label>
+          <select id="specVolt">
+            <option value="">Select</option>
+            <option>208V</option>
+            <option>230V</option>
+            <option>460V</option>
+            <option>575V</option>
+            <option>2300V</option>
+            <option>4160V</option>
+            <option>380V</option>
+            <option>400V</option>
+            <option>415V</option>
+          </select>
+        </div>
+        <div class="spec-field">
+          <label>Speed (RPM)</label>
+          <input type="text" id="specRPM" placeholder="1800" />
+        </div>
+        <div class="spec-field">
+          <label>Frame</label>
+          <input type="text" id="specFrame" placeholder="256T" />
+        </div>
+        <div class="spec-field">
+          <label>Enclosure</label>
+          <select id="specEnc">
+            <option value="">Select</option>
+            <option>TEFC</option>
+            <option>TEAO</option>
+            <option>TENV</option>
+            <option>TEVC</option>
+            <option>WP-I</option>
+            <option>WP-II</option>
+            <option>ODP</option>
+            <option>Explosion Proof</option>
+            <option>IP55</option>
+            <option>IP66</option>
+          </select>
+        </div>
+        <div class="spec-field">
+          <label>Insulation</label>
+          <select id="specIns">
+            <option value="">Select</option>
+            <option>Class B (130°C)</option>
+            <option>Class F (155°C)</option>
+            <option>Class H (180°C)</option>
+          </select>
+        </div>
+        <div class="spec-field spec-full">
+          <label>Manufacturer / Series</label>
+          <select id="specMfr">
+            <option value="">Select</option>
+            <optgroup label="WEG">
+              <option>WEG W22 IE3</option>
+              <option>WEG W22 IE4</option>
+              <option>WEG W22X ATEX</option>
+              <option>WEG CFW900 Drive</option>
+            </optgroup>
+            <optgroup label="Marathon / Regal Rexnord">
+              <option>Marathon BlackMax</option>
+              <option>Marathon Blue Chip</option>
+              <option>Marathon Hyper-E</option>
+              <option>Marathon Odpxe (Inverter Duty)</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="spec-field spec-full">
+          <label>Application / Load Type</label>
+          <select id="specLoad">
+            <option value="">Select</option>
+            <option>Pump — Centrifugal</option>
+            <option>Fan / Blower</option>
+            <option>Compressor — Reciprocating</option>
+            <option>Compressor — Screw</option>
+            <option>Conveyor</option>
+            <option>Mixer / Agitator</option>
+            <option>Crusher / Grinder</option>
+            <option>Crane / Hoist</option>
+            <option>VFD Variable Torque</option>
+            <option>VFD Constant Torque</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Prompts -->
+    <div class="sidebar-section">
+      <div class="section-label">Quick Engineering Queries</div>
+      <div class="quick-prompts">
+        <button class="qp-btn" onclick="sendQuickPrompt(this)">
+          <span class="qp-icon">⚡</span>Analyze starting current (LRA) & NEMA Design B compliance for current motor specs
+        </button>
+        <button class="qp-btn" onclick="sendQuickPrompt(this)">
+          <span class="qp-icon">🌡️</span>Check thermal class & service factor against NEMA MG1-12 temp rise limits
+        </button>
+        <button class="qp-btn" onclick="sendQuickPrompt(this)">
+          <span class="qp-icon">🔧</span>Evaluate bearing selection — radial load capacity & L10 life for this frame size
+        </button>
+        <button class="qp-btn" onclick="sendQuickPrompt(this)">
+          <span class="qp-icon">📊</span>Compare WEG W22 IE4 vs Marathon Hyper-E for VFD variable torque application
+        </button>
+        <button class="qp-btn" onclick="sendQuickPrompt(this)">
+          <span class="qp-icon">🛡️</span>Review NEMA enclosure vs IEC IP rating equivalency and ingress protection
+        </button>
+        <button class="qp-btn" onclick="sendQuickPrompt(this)">
+          <span class="qp-icon">📐</span>Calculate shaft deflection & critical speed for overhung load condition
+        </button>
+      </div>
+    </div>
+
+    <!-- Session History -->
+    <div class="sidebar-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <div class="section-label">Session Queries</div>
+      <div class="history-list" id="historyList">
+        <div class="hist-item">
+          <span>NEMA MG1-12 efficiency class comparison</span>
+          <span class="hi-time">Earlier today · IE3 analysis</span>
+        </div>
+        <div class="hist-item">
+          <span>VFD derating — WEG W22 50HP @ 460V</span>
+          <span class="hi-time">Session start</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="main-area">
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchTab('chat', this)">AI Engineering Chat</div>
+      <div class="tab" onclick="switchTab('dim', this)">Dimensional Standards</div>
+      <div class="tab" onclick="switchTab('ref', this)">NEMA / IEC Reference</div>
+      <div class="tab" onclick="switchTab('diag', this)">Diagnostics Checklist</div>
+    </div>
+
+    <!-- ═══ TAB: CHAT ═══ -->
+    <div class="tab-panel active" id="tab-chat">
+      <div class="chat-container" id="chatContainer">
+
+        <!-- Welcome -->
+        <div class="welcome-block">
+          <h2>⚙ AI Motor Design Engineer</h2>
+          <p>Expert-level support for NEMA/IEC motor design, selection, and failure analysis. Grounded in <strong>NEMA MG1</strong>, <strong>IEEE 112</strong>, <strong>IEC 60034</strong>, and manufacturer-specific engineering data for <strong>WEG</strong> and <strong>Marathon/Regal Rexnord</strong> motor lines.</p>
+          <div class="capability-chips">
+            <span class="chip chip-a">Thermal Analysis</span>
+            <span class="chip chip-b">Starting Torque / LRC</span>
+            <span class="chip chip-a">VFD Derating</span>
+            <span class="chip chip-c">Bearing Life (L10)</span>
+            <span class="chip chip-d">IE2/IE3/IE4 Efficiency</span>
+            <span class="chip chip-b">NEMA Design A/B/C/D</span>
+            <span class="chip chip-a">Insulation Class</span>
+            <span class="chip chip-c">Frame / Mounting NEMA/IEC</span>
+            <span class="chip chip-d">Service Factor</span>
+            <span class="chip chip-b">Enclosure / IP Rating</span>
+            <span class="chip chip-a">Shaft Critical Speed</span>
+            <span class="chip chip-c">Failure Root Cause Analysis</span>
+          </div>
+        </div>
+
+        <!-- Example AI Response -->
+        <div class="message ai" id="exampleMsg">
+          <div class="msg-avatar ai">AI</div>
+          <div class="msg-body">
+            <div class="msg-meta">AI MOTOR ENGINEER · Ready</div>
+            <div class="msg-content">
+              <strong>Ready for engineering analysis.</strong> Configure motor parameters in the sidebar panel and ask any design question — or select a quick query to begin. I can analyze per NEMA MG1-2022 and IEC 60034-series standards, cross-reference WEG and Marathon datasheets, and provide calculations beyond standard datasheet lookups.
+
+              <div class="resp-section">
+                <div class="resp-section-hdr hdr-amber">
+                  <span>📋</span> Example Analysis Capabilities
+                </div>
+                <div class="resp-section-body">
+                  <ul class="eng-list">
+                    <li>NEMA MG1-12.38 full-load temperature rise vs insulation class limits with service factor corrections</li>
+                    <li>Starting torque (NEMA Design B: ≥150% FLT), breakdown torque (≥200% FLT), and pull-up torque verification</li>
+                    <li>WEG W22 frame cross-reference to NEMA 48–449T and IEC 63–315 mounting dimensions</li>
+                    <li>VFD application — carrier frequency effects, reflected wave voltage, and <span class="inline-code">dV/dt</span> compliance per NEMA MG1 Part 31</li>
+                    <li>Bearing load calculations using SKF/FAG empirical methods for selected WEG/Marathon frame sizes</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Input Area -->
+      <div class="input-area">
+        <div class="input-toolbar">
+          <span class="toolbar-label">Context</span>
+          <div class="context-chips">
+            <span class="ctx-chip active" id="ctx-nema" onclick="toggleCtx(this)">NEMA MG1</span>
+            <span class="ctx-chip active" id="ctx-iec" onclick="toggleCtx(this)">IEC 60034</span>
+            <span class="ctx-chip active" id="ctx-weg" onclick="toggleCtx(this)">WEG Data</span>
+            <span class="ctx-chip active" id="ctx-mar" onclick="toggleCtx(this)">Marathon Data</span>
+            <span class="ctx-chip" id="ctx-ieee" onclick="toggleCtx(this)">IEEE 112</span>
+            <span class="ctx-chip" id="ctx-vfd" onclick="toggleCtx(this)">VFD/Drive</span>
+          </div>
+        </div>
+        <div class="input-row">
+          <div class="input-wrap">
+            <textarea id="userInput" placeholder="Ask an engineering question — e.g. 'What's the max ambient temperature for a 1.15 SF Class F motor with TEFC enclosure at full load per NEMA MG1?'"
+              rows="2" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          </div>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send (Ctrl+Enter)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: DIMENSIONAL STANDARDS ═══ -->
+    <div class="tab-panel" id="tab-dim">
+      <div class="dim-panel">
+
+        <!-- Lookup Header -->
+        <div class="dim-lookup-bar">
+          <div class="dim-lookup-inner">
+            <div class="dim-header-text">
+              <h3>Frame & Enclosure Dimensional Standards Lookup</h3>
+              <p>Enter frame designation + enclosure type to retrieve all governing dimensional requirements per NEMA MG1 Part 4 / IEC 60072 / ISO 9001</p>
+            </div>
+            <div class="dim-lookup-controls">
+              <div class="dim-lookup-row">
+                <div class="dlc-group">
+                  <label>Standard System</label>
+                  <div class="toggle-switch-group">
+                    <button class="tsb active" id="sysNEMA" onclick="setSystem('NEMA')">NEMA (Inch)</button>
+                    <button class="tsb" id="sysIEC" onclick="setSystem('IEC')">IEC (Metric)</button>
+                  </div>
+                </div>
+                <div class="dlc-group">
+                  <label>Frame</label>
+                  <select id="dimFrame" onchange="onFrameChange()">
+                    <option value="">— Select Frame —</option>
+                  </select>
+                </div>
+                <div class="dlc-group">
+                  <label>Enclosure</label>
+                  <select id="dimEnclosure" onchange="runDimLookup()">
+                    <option value="">— Select Enclosure —</option>
+                    <option value="TEFC">TEFC</option>
+                    <option value="TEAO">TEAO</option>
+                    <option value="TENV">TENV</option>
+                    <option value="ODP">ODP</option>
+                    <option value="WP1">WP-I</option>
+                    <option value="EXPRF">Explosion Proof</option>
+                    <option value="IP55">IP55 (IEC)</option>
+                    <option value="IP66">IP66 (IEC)</option>
+                  </select>
+                </div>
+                <div class="dlc-group">
+                  <label>Mounting</label>
+                  <select id="dimMounting" onchange="runDimLookup()">
+                    <option value="F1">F-1 (Foot Mount)</option>
+                    <option value="C">C-Face Flange</option>
+                    <option value="D">D-Flange</option>
+                    <option value="P">P-Base</option>
+                    <option value="B5">B5 Flange (IEC)</option>
+                    <option value="B14">B14 Face (IEC)</option>
+                    <option value="B3">B3 Foot (IEC)</option>
+                  </select>
+                </div>
+                <button class="dim-lookup-btn" onclick="runDimLookup()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  Generate Dimensional Report
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results area -->
+        <div class="dim-results-area" id="dimResultsArea">
+          <!-- Default state -->
+          <div class="dim-default-state" id="dimDefaultState">
+            <div class="dim-default-icon">📐</div>
+            <div class="dim-default-title">Select Frame + Enclosure to Generate Report</div>
+            <div class="dim-default-sub">The engine will output all governing dimensional standards, tolerances, fits, and compliance requirements for the selected combination</div>
+            <div class="dim-quick-examples">
+              <span class="dim-eg" onclick="quickDimExample('NEMA','256T','TEFC','F1')">256T · TEFC · Foot Mount</span>
+              <span class="dim-eg" onclick="quickDimExample('NEMA','326T','EXPRF','C')">326T · Explosion Proof · C-Face</span>
+              <span class="dim-eg" onclick="quickDimExample('NEMA','405T','TEAO','F1')">405T · TEAO · Foot Mount</span>
+              <span class="dim-eg" onclick="quickDimExample('IEC','160','IP55','B3')">IEC 160 · IP55 · B3 Foot</span>
+              <span class="dim-eg" onclick="quickDimExample('IEC','200','IP66','B5')">IEC 200 · IP66 · B5 Flange</span>
+            </div>
+          </div>
+          <!-- Report renders here -->
+          <div id="dimReport" style="display:none;"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ TAB: NEMA/IEC REFERENCE ═══ -->
+    <div class="tab-panel" id="tab-ref">
+      <div class="ref-panel">
+        <div style="margin-bottom:16px;">
+          <h3 style="font-family:var(--condensed);font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-primary);">NEMA / IEC Quick Reference Data</h3>
+          <p style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Key tables from NEMA MG1-2022, IEC 60034, and IEEE 112 for immediate field reference</p>
+        </div>
+        <div class="ref-grid">
+
+          <div class="ref-card">
+            <div class="ref-card-hdr"><span>NEMA Design Types</span><span style="font-size:10px;color:var(--text-dim);">MG1-12</span></div>
+            <div class="ref-card-body">
+              <table class="data-table">
+                <tr><th>Type</th><th>Starting Torque</th><th>LRC</th><th>Slip</th></tr>
+                <tr><td>Design A</td><td class="ok">Normal</td><td class="warn">High</td><td class="val">&lt;5%</td></tr>
+                <tr><td>Design B</td><td class="ok">Normal</td><td class="ok">Low</td><td class="val">&lt;5%</td></tr>
+                <tr><td>Design C</td><td class="ok">High</td><td class="ok">Low</td><td class="val">&lt;5%</td></tr>
+                <tr><td>Design D</td><td class="ok">Very High</td><td class="ok">Low</td><td class="warn">5–13%</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="ref-card">
+            <div class="ref-card-hdr"><span>Insulation Temperature Limits</span><span style="font-size:10px;color:var(--text-dim);">MG1-1.65</span></div>
+            <div class="ref-card-body">
+              <table class="data-table">
+                <tr><th>Class</th><th>Hot Spot Limit</th><th>Rise (SF=1.0)</th><th>Rise (SF=1.15)</th></tr>
+                <tr><td>Class A</td><td class="val">105°C</td><td class="val">60°C</td><td class="val">70°C</td></tr>
+                <tr><td>Class B</td><td class="val">130°C</td><td class="ok">80°C</td><td class="ok">90°C</td></tr>
+                <tr><td>Class F</td><td class="val">155°C</td><td class="warn">105°C</td><td class="warn">115°C</td></tr>
+                <tr><td>Class H</td><td class="val">180°C</td><td class="crit">125°C</td><td class="crit">135°C</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="ref-card">
+            <div class="ref-card-hdr"><span>IE Efficiency Classes</span><span style="font-size:10px;color:var(--text-dim);">IEC 60034-30-1</span></div>
+            <div class="ref-card-body">
+              <table class="data-table">
+                <tr><th>Class</th><th>Description</th><th>Regulatory Status</th></tr>
+                <tr><td class="val">IE1</td><td>Standard Eff.</td><td class="warn">Phased Out</td></tr>
+                <tr><td class="val">IE2</td><td>High Eff.</td><td class="warn">Restricted (EU, CN)</td></tr>
+                <tr><td class="val">IE3</td><td>Premium Eff.</td><td class="ok">Mandatory (most)</td></tr>
+                <tr><td class="val">IE4</td><td>Super Premium</td><td class="ok">Best Practice</td></tr>
+                <tr><td class="val">IE5</td><td>Ultra Premium</td><td class="cyan" style="color:var(--cyan);">Emerging</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="ref-card">
+            <div class="ref-card-hdr"><span>NEMA vs IEC IP Rating</span><span style="font-size:10px;color:var(--text-dim);">IEC 60529</span></div>
+            <div class="ref-card-body">
+              <table class="data-table">
+                <tr><th>NEMA Type</th><th>IEC IP Equiv.</th><th>Application</th></tr>
+                <tr><td>ODP</td><td class="val">IP23</td><td>Dry, indoor</td></tr>
+                <tr><td>TEFC</td><td class="val">IP55</td><td>General outdoor</td></tr>
+                <tr><td>TENV</td><td class="val">IP65</td><td>Wash-down</td></tr>
+                <tr><td>TEAO</td><td class="val">IP54</td><td>Duct ventilated</td></tr>
+                <tr><td>Explosion Proof</td><td class="val">IP66+</td><td>Hazloc Class I/II</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="ref-card">
+            <div class="ref-card-hdr"><span>NEMA Frame Shaft Data</span><span style="font-size:10px;color:var(--text-dim);">MG1-4.4 (T-Frame)</span></div>
+            <div class="ref-card-body">
+              <table class="data-table">
+                <tr><th>Frame</th><th>Shaft Dia. D</th><th>Shaft Ext. E</th><th>Ctr. Hgt.</th></tr>
+                <tr><td>182T</td><td class="val">1.125"</td><td class="val">2.75"</td><td class="val">4.50"</td></tr>
+                <tr><td>213T</td><td class="val">1.375"</td><td class="val">3.25"</td><td class="val">5.25"</td></tr>
+                <tr><td>256T</td><td class="val">1.625"</td><td class="val">4.00"</td><td class="val">6.25"</td></tr>
+                <tr><td>326T</td><td class="val">1.875"</td><td class="val">4.50"</td><td class="val">8.00"</td></tr>
+                <tr><td>405T</td><td class="val">2.375"</td><td class="val">5.50"</td><td class="val">10.00"</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="ref-card">
+            <div class="ref-card-hdr"><span>Service Factor Guidelines</span><span style="font-size:10px;color:var(--text-dim);">MG1-14.35</span></div>
+            <div class="ref-card-body">
+              <div class="ref-row"><span class="rk">SF 1.0 — All motors</span><span class="rv">Base design, no reserve</span></div>
+              <div class="ref-row"><span class="rk">SF 1.15 — NEMA standard</span><span class="rv">15% overload capable</span></div>
+              <div class="ref-row"><span class="rk">SF with VFD</span><span class="rv">Derate to SF 1.0</span></div>
+              <div class="ref-row"><span class="rk">SF @ high altitude (&gt;3300 ft)</span><span class="rv">Reduce 3% per 1000 ft</span></div>
+              <div class="ref-row"><span class="rk">SF @ high ambient (&gt;40°C)</span><span class="rv">Derate per MG1-14.4</span></div>
+              <div class="ref-row"><span class="rk">Marathon SF in catalogue</span><span class="rv">1.15 std / 1.25 premium</span></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:16px;padding:12px 14px;background:var(--bg-panel);border:1px solid var(--border-dim);border-radius:6px;">
+          <div style="font-family:var(--condensed);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Key Standard References</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--blue);">NEMA MG1-2022</span>
+            <span style="color:var(--text-dim)">|</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--cyan);">IEC 60034-1:2022</span>
+            <span style="color:var(--text-dim)">|</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--cyan);">IEC 60034-30-1:2022</span>
+            <span style="color:var(--text-dim)">|</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--green);">IEEE 112-2017</span>
+            <span style="color:var(--text-dim)">|</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--amber);">NEMA MG10 (Energy Mgmt)</span>
+            <span style="color:var(--text-dim)">|</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--amber);">NEMA MG11 (Single-Phase)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: DIAGNOSTICS ═══ -->
+    <div class="tab-panel" id="tab-diag">
+      <div class="diag-panel">
+        <div style="margin-bottom:16px;">
+          <h3 style="font-family:var(--condensed);font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-primary);">Failure Mode Diagnostics</h3>
+          <p style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Select a failure mode to load a structured root-cause analysis checklist</p>
+        </div>
+        <div class="diag-matrix">
+          <div class="diag-card" onclick="loadDiag('overtemp')">
+            <div class="dc-icon">🌡️</div>
+            <div class="dc-label">Overtemperature</div>
+            <div class="dc-sub">Thermal runaway, insulation</div>
+          </div>
+          <div class="diag-card" onclick="loadDiag('vibration')">
+            <div class="dc-icon">〰️</div>
+            <div class="dc-label">Excessive Vibration</div>
+            <div class="dc-sub">Rotor, balance, bearing</div>
+          </div>
+          <div class="diag-card" onclick="loadDiag('bearing')">
+            <div class="dc-icon">⚙️</div>
+            <div class="dc-label">Bearing Failure</div>
+            <div class="dc-sub">Fluting, lubrication, load</div>
+          </div>
+          <div class="diag-card" onclick="loadDiag('starting')">
+            <div class="dc-icon">⚡</div>
+            <div class="dc-label">Starting Failure</div>
+            <div class="dc-sub">Low torque, high LRC</div>
+          </div>
+          <div class="diag-card" onclick="loadDiag('insulation')">
+            <div class="dc-icon">🛡️</div>
+            <div class="dc-label">Insulation Failure</div>
+            <div class="dc-sub">Turn-to-turn, ground fault</div>
+          </div>
+          <div class="diag-card" onclick="loadDiag('vfd')">
+            <div class="dc-icon">📡</div>
+            <div class="dc-label">VFD Compatibility</div>
+            <div class="dc-sub">dV/dt, bearing currents</div>
+          </div>
+        </div>
+
+        <div class="diag-result" id="diagResult"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+const SPEC_CTX = () => {
+  const p = document.getElementById('specPower').value;
+  const v = document.getElementById('specVolt').value;
+  const r = document.getElementById('specRPM').value;
+  const f = document.getElementById('specFrame').value;
+  const e = document.getElementById('specEnc').value;
+  const i = document.getElementById('specIns').value;
+  const m = document.getElementById('specMfr').value;
+  const l = document.getElementById('specLoad').value;
+  let parts = [];
+  if (m) parts.push(`Manufacturer/Series: ${m}`);
+  if (p) parts.push(`Power: ${p}`);
+  if (v) parts.push(`Voltage: ${v}`);
+  if (r) parts.push(`Speed: ${r} RPM`);
+  if (f) parts.push(`Frame: ${f}`);
+  if (e) parts.push(`Enclosure: ${e}`);
+  if (i) parts.push(`Insulation: ${i}`);
+  if (l) parts.push(`Load/Application: ${l}`);
+  return parts.length ? `\n\n[Motor Parameters: ${parts.join(' | ')}]` : '';
+};
+
+const ACTIVE_CTX = () => {
+  const chips = ['ctx-nema','ctx-iec','ctx-weg','ctx-mar','ctx-ieee','ctx-vfd'];
+  const labels = { 'ctx-nema':'NEMA MG1', 'ctx-iec':'IEC 60034', 'ctx-weg':'WEG Engineering Data',
+    'ctx-mar':'Marathon/Regal Rexnord Data', 'ctx-ieee':'IEEE 112', 'ctx-vfd':'VFD/Drive Compatibility' };
+  return chips.filter(id => document.getElementById(id).classList.contains('active'))
+    .map(id => labels[id]).join(', ');
+};
+
+let isLoading = false;
+let conversationHistory = [];
+
+// ── SYSTEM PROMPT ──
+const SYSTEM_PROMPT = `You are an expert AI Motor Design Engineer with deep specialization in NEMA and IEC AC induction motors, specifically WEG and Marathon (Regal Rexnord) product lines. You have encyclopedic knowledge of:
+
+STANDARDS & CODES:
+- NEMA MG1-2022 (all parts: efficiency, temperature, torque, dimensions, VFD)
+- IEC 60034-1, IEC 60034-30-1 (efficiency classes IE1–IE5)
+- IEEE 112-2017 (efficiency test methods)
+- NEMA MG10, MG11, MG31 (energy management, single-phase, inverter-duty)
+- NEC Article 430 (motor circuits, protection)
+
+MANUFACTURER DATA (WEG):
+- W22 IE3/IE4 performance curves, frame data, dimensional standards
+- WEG CFW900 VFD application guidelines
+- WEG derating factors for altitude, ambient temperature, voltage unbalance
+- WEG bearing selection guide, lubrication intervals by frame and speed
+
+MANUFACTURER DATA (MARATHON / REGAL REXNORD):
+- BlackMax, Blue Chip, Hyper-E, OdpXE, Vector Plus product lines
+- Service factor capabilities, frame dimensions, thermal packaging
+- Marathon inverter-duty motor specifications per NEMA MG1 Part 31
+
+ENGINEERING ANALYSIS CAPABILITIES:
+- Thermal analysis: temperature rise, hot spot calculations, insulation life (Arrhenius model)
+- Starting performance: LRA, locked rotor torque, breakdown torque, pull-up torque per NEMA Design A/B/C/D
+- VFD compatibility: dV/dt stress, reflected wave voltage, bearing current (EDM) analysis per MG1-31
+- Bearing engineering: L10 life, dynamic load ratings, radial/axial load analysis, lubrication
+- Shaft mechanics: deflection, critical speed calculation, overhung load capability
+- Efficiency analysis: IE class compliance, full/partial load efficiency, power factor
+- Enclosure selection: NEMA vs IEC IP equivalency, ingress protection, cooling methods
+- Frame/mounting: NEMA T-frame dimensions, IEC frame equivalents, footprint compatibility
+
+RESPONSE FORMAT:
+Provide structured engineering responses with:
+1. Direct engineering answer with specific values, standards references, and standard clause numbers
+2. Relevant calculations shown with formulas
+3. Design recommendations beyond basic datasheet lookups
+4. Alert any compliance concerns, failure risks, or non-standard conditions
+5. Compare WEG vs Marathon where relevant
+6. Always cite the specific NEMA MG1 part, IEC standard section, or IEEE clause you are referencing
+
+Use technical language appropriate for a mechanical design engineer. Be specific — give numbers, tolerances, limits. Never give vague answers. If the question concerns a specific motor size, calculate actual values rather than generic guidance.`;
+
+// ── SEND MESSAGE ──
+async function sendMessage(forceText) {
+  if (isLoading) return;
+  const ta = document.getElementById('userInput');
+  const text = forceText || ta.value.trim();
+  if (!text) return;
+
+  const specCtx = SPEC_CTX();
+  const activeCtx = ACTIVE_CTX();
+  const fullUserMsg = text + specCtx + (activeCtx ? `\n[Active Standards Context: ${activeCtx}]` : '');
+
+  appendMessage('user', text);
+  conversationHistory.push({ role: 'user', content: fullUserMsg });
+
+  if (!forceText) { ta.value = ''; ta.style.height = ''; }
+
+  // Add to history list
+  addHistoryItem(text);
+
+  // Show loading
+  const loadingId = showLoading();
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: conversationHistory
+      })
+    });
+
+    const data = await response.json();
+    removeLoading(loadingId);
+
+    if (data.content && data.content[0]) {
+      const aiText = data.content.map(b => b.type === 'text' ? b.text : '').join('');
+      conversationHistory.push({ role: 'assistant', content: aiText });
+      appendMessage('ai', aiText);
+    } else {
+      appendMessage('ai', 'API error: ' + (data.error?.message || JSON.stringify(data)));
+    }
+  } catch (err) {
+    removeLoading(loadingId);
+    appendMessage('ai', `Network error: ${err.message}. Please check your connection.`);
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function appendMessage(role, text) {
+  const cc = document.getElementById('chatContainer');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = `msg-avatar ${role === 'ai' ? 'ai' : 'user-av'}`;
+  avatar.textContent = role === 'ai' ? 'AI' : 'ENG';
+
+  const body = document.createElement('div');
+  body.className = 'msg-body';
+
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  meta.textContent = role === 'ai' ? `AI MOTOR ENGINEER · ${now}` : `DESIGN ENGINEER · ${now}`;
+
+  const content = document.createElement('div');
+  content.className = 'msg-content';
+  content.innerHTML = formatResponse(text);
+
+  body.appendChild(meta);
+  body.appendChild(content);
+  div.appendChild(avatar);
+  div.appendChild(body);
+  cc.appendChild(div);
+  cc.scrollTop = cc.scrollHeight;
+}
+
+function formatResponse(text) {
+  // Convert markdown-style formatting to HTML
+  let html = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<span class="inline-code">$1</span>')
+    .replace(/^#{1,3}\s+(.+)$/gm, '<div style="font-family:var(--condensed);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--amber);margin:10px 0 5px">$1</div>')
+    .replace(/^[-•]\s+(.+)$/gm, '<div style="display:flex;gap:8px;margin:3px 0"><span style="color:var(--amber);flex-shrink:0">▸</span><span>$1</span></div>')
+    .replace(/^\d+\.\s+(.+)$/gm, '<div style="display:flex;gap:8px;margin:3px 0"><span style="color:var(--blue);flex-shrink:0;font-family:var(--mono);font-size:11px">→</span><span>$1</span></div>')
+    .replace(/\n{2,}/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+
+  // Highlight standard references
+  html = html.replace(/(NEMA MG1[-\d\.]*)/g, '<span style="color:var(--amber);font-family:var(--mono);font-size:11px">$1</span>');
+  html = html.replace(/(IEC 60034[-\d\-]*)/g, '<span style="color:var(--cyan);font-family:var(--mono);font-size:11px">$1</span>');
+  html = html.replace(/(IEEE 112[-\d]*)/g, '<span style="color:var(--green);font-family:var(--mono);font-size:11px">$1</span>');
+  // Highlight temperature, voltages, currents
+  html = html.replace(/(\d+\.?\d*\s*°C)/g, '<span style="color:var(--amber);font-family:var(--mono);font-size:11px">$1</span>');
+  html = html.replace(/(\d+\.?\d*\s*%)/g, '<span style="color:var(--cyan);font-family:var(--mono);font-size:11px">$1</span>');
+
+  return html;
+}
+
+function showLoading() {
+  const cc = document.getElementById('chatContainer');
+  const id = 'loading_' + Date.now();
+  const div = document.createElement('div');
+  div.id = id;
+  div.className = 'message ai';
+  div.innerHTML = `
+    <div class="msg-avatar ai">AI</div>
+    <div class="msg-body">
+      <div class="typing-indicator">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+        <span>Analyzing against NEMA MG1 & manufacturer data...</span>
+      </div>
+    </div>`;
+  cc.appendChild(div);
+  cc.scrollTop = cc.scrollHeight;
+  return id;
+}
+
+function removeLoading(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function addHistoryItem(text) {
+  const hl = document.getElementById('historyList');
+  const item = document.createElement('div');
+  item.className = 'hist-item';
+  const truncated = text.length > 55 ? text.substring(0, 55) + '...' : text;
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  item.innerHTML = `<span>${truncated}</span><span class="hi-time">${now}</span>`;
+  hl.insertBefore(item, hl.firstChild);
+}
+
+// ── QUICK PROMPTS ──
+function sendQuickPrompt(btn) {
+  const text = btn.textContent.trim().replace(/^[^\w]+/, '').trim();
+  document.getElementById('userInput').value = '';
+  sendMessage(text);
+  // Switch to chat tab
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.tab').classList.add('active');
+  switchTab('chat', document.querySelector('.tab'));
+}
+
+// ══════════════════════════════════════════
+// DIMENSIONAL STANDARDS ENGINE
+// ══════════════════════════════════════════
+
+// ── NEMA T-FRAME DATA (per NEMA MG1 Part 4, Table 4-1 through 4-17) ──
+const NEMA_FRAMES = {
+  '48': {
+    D:'12.000"', E:'5.750"', '2F':'7.000"', BA:'2.750"', H:'0.344"',
+    N_W:'2.750"', U:'0.500"', V_min:'1.500"', keyW:'0.125"', keyH:'0.125"',
+    typicalHP:'0.33–0.75', typicalRPM:'1800/3600',
+    bearingDE:'6203', bearingNDE:'6203', shaftDia:'0.500"', notes:'Pre-T frame, legacy. D=12" is shaft centerline height.'
+  },
+  '56': {
+    D:'14.000"', E:'7.000"', '2F':'9.000"', BA:'3.500"', H:'0.406"',
+    N_W:'3.000"', U:'0.625"', V_min:'1.875"', keyW:'0.156"', keyH:'0.156"',
+    typicalHP:'0.5–1.5', typicalRPM:'1800/3600',
+    bearingDE:'6205', bearingNDE:'6204', shaftDia:'0.625"', notes:'56 frame is commonly used for sub-fractional/fractional HP. T-suffix not used.'
+  },
+  '143T': {
+    D:'3.500"', E:'2.750"', '2F':'7.000"', BA:'2.250"', H:'0.281"',
+    N_W:'2.000"', U:'0.875"', V_min:'2.000"', keyW:'0.188"', keyH:'0.188"',
+    typicalHP:'1–2', typicalRPM:'1800/3600',
+    bearingDE:'6205', bearingNDE:'6204', shaftDia:'0.875"', notes:'Smallest T-frame integral HP motor.'
+  },
+  '145T': {
+    D:'3.500"', E:'2.750"', '2F':'9.000"', BA:'2.250"', H:'0.281"',
+    N_W:'2.250"', U:'0.875"', V_min:'2.000"', keyW:'0.188"', keyH:'0.188"',
+    typicalHP:'2–3', typicalRPM:'1800/3600',
+    bearingDE:'6205', bearingNDE:'6204', shaftDia:'0.875"', notes:'Same D/E as 143T but longer stack (2F).'
+  },
+  '182T': {
+    D:'4.500"', E:'3.750"', '2F':'9.000"', BA:'2.750"', H:'0.344"',
+    N_W:'2.750"', U:'1.125"', V_min:'2.750"', keyW:'0.250"', keyH:'0.250"',
+    typicalHP:'3–5', typicalRPM:'1800/3600',
+    bearingDE:'6207', bearingNDE:'6206', shaftDia:'1.125"', notes:''
+  },
+  '184T': {
+    D:'4.500"', E:'3.750"', '2F':'11.000"', BA:'2.750"', H:'0.344"',
+    N_W:'3.000"', U:'1.125"', V_min:'2.750"', keyW:'0.250"', keyH:'0.250"',
+    typicalHP:'5–7.5', typicalRPM:'1800/3600',
+    bearingDE:'6207', bearingNDE:'6206', shaftDia:'1.125"', notes:''
+  },
+  '213T': {
+    D:'5.250"', E:'4.250"', '2F':'11.000"', BA:'3.375"', H:'0.406"',
+    N_W:'3.250"', U:'1.375"', V_min:'3.250"', keyW:'0.312"', keyH:'0.312"',
+    typicalHP:'7.5–10', typicalRPM:'1800/3600',
+    bearingDE:'6209', bearingNDE:'6207', shaftDia:'1.375"', notes:''
+  },
+  '215T': {
+    D:'5.250"', E:'4.250"', '2F':'13.000"', BA:'3.375"', H:'0.406"',
+    N_W:'3.500"', U:'1.375"', V_min:'3.250"', keyW:'0.312"', keyH:'0.312"',
+    typicalHP:'10–15', typicalRPM:'1800/3600',
+    bearingDE:'6209', bearingNDE:'6208', shaftDia:'1.375"', notes:''
+  },
+  '254T': {
+    D:'6.250"', E:'5.000"', '2F':'14.000"', BA:'4.125"', H:'0.531"',
+    N_W:'4.000"', U:'1.625"', V_min:'4.000"', keyW:'0.375"', keyH:'0.375"',
+    typicalHP:'15–20', typicalRPM:'1800/3600',
+    bearingDE:'6211', bearingNDE:'6209', shaftDia:'1.625"', notes:''
+  },
+  '256T': {
+    D:'6.250"', E:'5.000"', '2F':'16.500"', BA:'4.125"', H:'0.531"',
+    N_W:'4.000"', U:'1.625"', V_min:'4.000"', keyW:'0.375"', keyH:'0.375"',
+    typicalHP:'20–25', typicalRPM:'1800/3600',
+    bearingDE:'6211', bearingNDE:'6210', shaftDia:'1.625"', notes:''
+  },
+  '284T': {
+    D:'7.000"', E:'5.500"', '2F':'15.750"', BA:'4.625"', H:'0.531"',
+    N_W:'4.500"', U:'1.875"', V_min:'4.500"', keyW:'0.500"', keyH:'0.500"',
+    typicalHP:'25–30', typicalRPM:'1800',
+    bearingDE:'6213', bearingNDE:'6211', shaftDia:'1.875"', notes:'284T also used for 25HP 1200RPM'
+  },
+  '286T': {
+    D:'7.000"', E:'5.500"', '2F':'18.000"', BA:'4.625"', H:'0.531"',
+    N_W:'5.000"', U:'1.875"', V_min:'4.500"', keyW:'0.500"', keyH:'0.500"',
+    typicalHP:'30–40', typicalRPM:'1800',
+    bearingDE:'6213', bearingNDE:'6212', shaftDia:'1.875"', notes:''
+  },
+  '324T': {
+    D:'8.000"', E:'6.250"', '2F':'17.500"', BA:'5.250"', H:'0.656"',
+    N_W:'5.250"', U:'2.125"', V_min:'5.500"', keyW:'0.500"', keyH:'0.500"',
+    typicalHP:'40–50', typicalRPM:'1800',
+    bearingDE:'6215', bearingNDE:'6213', shaftDia:'2.125"', notes:''
+  },
+  '326T': {
+    D:'8.000"', E:'6.250"', '2F':'20.500"', BA:'5.250"', H:'0.656"',
+    N_W:'5.500"', U:'2.125"', V_min:'5.500"', keyW:'0.500"', keyH:'0.500"',
+    typicalHP:'50–60', typicalRPM:'1800',
+    bearingDE:'6215', bearingNDE:'6214', shaftDia:'2.125"', notes:''
+  },
+  '364T': {
+    D:'9.000"', E:'7.000"', '2F':'20.000"', BA:'5.875"', H:'0.812"',
+    N_W:'6.375"', U:'2.375"', V_min:'6.000"', keyW:'0.625"', keyH:'0.625"',
+    typicalHP:'60–75', typicalRPM:'1800',
+    bearingDE:'6217', bearingNDE:'6215', shaftDia:'2.375"', notes:''
+  },
+  '365T': {
+    D:'9.000"', E:'7.000"', '2F':'23.000"', BA:'5.875"', H:'0.812"',
+    N_W:'6.375"', U:'2.375"', V_min:'6.000"', keyW:'0.625"', keyH:'0.625"',
+    typicalHP:'75–100', typicalRPM:'1800',
+    bearingDE:'6217', bearingNDE:'6216', shaftDia:'2.375"', notes:''
+  },
+  '404T': {
+    D:'10.000"', E:'8.000"', '2F':'22.000"', BA:'6.625"', H:'0.875"',
+    N_W:'7.250"', U:'2.875"', V_min:'7.250"', keyW:'0.750"', keyH:'0.750"',
+    typicalHP:'100–125', typicalRPM:'1800',
+    bearingDE:'6219', bearingNDE:'6217', shaftDia:'2.875"', notes:''
+  },
+  '405T': {
+    D:'10.000"', E:'8.000"', '2F':'25.000"', BA:'6.625"', H:'0.875"',
+    N_W:'7.250"', U:'2.875"', V_min:'7.250"', keyW:'0.750"', keyH:'0.750"',
+    typicalHP:'125–150', typicalRPM:'1800',
+    bearingDE:'6219', bearingNDE:'6218', shaftDia:'2.875"', notes:''
+  },
+  '444T': {
+    D:'11.000"', E:'9.000"', '2F':'24.500"', BA:'7.500"', H:'1.000"',
+    N_W:'8.250"', U:'3.375"', V_min:'8.375"', keyW:'0.875"', keyH:'0.875"',
+    typicalHP:'150–200', typicalRPM:'1800',
+    bearingDE:'6222', bearingNDE:'6219', shaftDia:'3.375"', notes:''
+  },
+  '445T': {
+    D:'11.000"', E:'9.000"', '2F':'28.000"', BA:'7.500"', H:'1.000"',
+    N_W:'8.250"', U:'3.375"', V_min:'8.375"', keyW:'0.875"', keyH:'0.875"',
+    typicalHP:'200–250', typicalRPM:'1800',
+    bearingDE:'6222', bearingNDE:'6220', shaftDia:'3.375"', notes:''
+  }
+};
+
+// ── IEC FRAME DATA (per IEC 60072-1, ISO 9001) ──
+const IEC_FRAMES = {
+  '56': {
+    H:'56mm', A:'90mm', B:'71mm', C:'56mm', D:'9mm', E:'20mm', F:'3mm', G:'2.5mm', K:'5.8mm',
+    boltSize:'M5', L_shaft:'20mm', keyW:'3mm', keyH:'3mm', typicalKW:'0.06–0.12', notes:'Micro-motor frame'
+  },
+  '63': {
+    H:'63mm', A:'100mm', B:'80mm', C:'63mm', D:'11mm', E:'23mm', F:'4mm', G:'3mm', K:'7mm',
+    boltSize:'M5', L_shaft:'23mm', keyW:'4mm', keyH:'4mm', typicalKW:'0.09–0.25', notes:''
+  },
+  '71': {
+    H:'71mm', A:'112mm', B:'90mm', C:'71mm', D:'14mm', E:'30mm', F:'5mm', G:'3.5mm', K:'7mm',
+    boltSize:'M6', L_shaft:'30mm', keyW:'5mm', keyH:'5mm', typicalKW:'0.25–0.55', notes:''
+  },
+  '80': {
+    H:'80mm', A:'125mm', B:'100mm', C:'80mm', D:'19mm', E:'40mm', F:'6mm', G:'4mm', K:'10mm',
+    boltSize:'M8', L_shaft:'40mm', keyW:'6mm', keyH:'6mm', typicalKW:'0.55–1.1', notes:''
+  },
+  '90S': {
+    H:'90mm', A:'140mm', B:'100mm', C:'90mm', D:'24mm', E:'50mm', F:'8mm', G:'5mm', K:'10mm',
+    boltSize:'M8', L_shaft:'50mm', keyW:'8mm', keyH:'7mm', typicalKW:'1.1–1.5', notes:'S=short stack'
+  },
+  '90L': {
+    H:'90mm', A:'140mm', B:'125mm', C:'90mm', D:'24mm', E:'50mm', F:'8mm', G:'5mm', K:'10mm',
+    boltSize:'M8', L_shaft:'50mm', keyW:'8mm', keyH:'7mm', typicalKW:'1.5–2.2', notes:'L=long stack'
+  },
+  '100L': {
+    H:'100mm', A:'160mm', B:'140mm', C:'100mm', D:'28mm', E:'60mm', F:'8mm', G:'5mm', K:'12mm',
+    boltSize:'M10', L_shaft:'60mm', keyW:'8mm', keyH:'7mm', typicalKW:'2.2–3', notes:''
+  },
+  '112M': {
+    H:'112mm', A:'190mm', B:'140mm', C:'112mm', D:'28mm', E:'60mm', F:'8mm', G:'5mm', K:'12mm',
+    boltSize:'M10', L_shaft:'60mm', keyW:'8mm', keyH:'7mm', typicalKW:'3–4', notes:'M=medium stack'
+  },
+  '132S': {
+    H:'132mm', A:'216mm', B:'140mm', C:'132mm', D:'38mm', E:'80mm', F:'10mm', G:'5mm', K:'15mm',
+    boltSize:'M12', L_shaft:'80mm', keyW:'10mm', keyH:'8mm', typicalKW:'4–5.5', notes:''
+  },
+  '132M': {
+    H:'132mm', A:'216mm', B:'178mm', C:'132mm', D:'38mm', E:'80mm', F:'10mm', G:'5mm', K:'15mm',
+    boltSize:'M12', L_shaft:'80mm', keyW:'10mm', keyH:'8mm', typicalKW:'5.5–7.5', notes:''
+  },
+  '160M': {
+    H:'160mm', A:'254mm', B:'210mm', C:'160mm', D:'42mm', E:'110mm', F:'12mm', G:'6mm', K:'18.5mm',
+    boltSize:'M16', L_shaft:'110mm', keyW:'12mm', keyH:'8mm', typicalKW:'11–15', notes:''
+  },
+  '160L': {
+    H:'160mm', A:'254mm', B:'254mm', C:'160mm', D:'42mm', E:'110mm', F:'12mm', G:'6mm', K:'18.5mm',
+    boltSize:'M16', L_shaft:'110mm', keyW:'12mm', keyH:'8mm', typicalKW:'15–18.5', notes:''
+  },
+  '180M': {
+    H:'180mm', A:'279mm', B:'241mm', C:'180mm', D:'48mm', E:'110mm', F:'14mm', G:'7mm', K:'21.5mm',
+    boltSize:'M16', L_shaft:'110mm', keyW:'14mm', keyH:'9mm', typicalKW:'15–22', notes:''
+  },
+  '200L': {
+    H:'200mm', A:'318mm', B:'305mm', C:'200mm', D:'55mm', E:'110mm', F:'16mm', G:'8mm', K:'24.5mm',
+    boltSize:'M20', L_shaft:'110mm', keyW:'16mm', keyH:'10mm', typicalKW:'22–37', notes:''
+  },
+  '225M': {
+    H:'225mm', A:'356mm', B:'286mm', C:'225mm', D:'55mm', E:'110mm', F:'16mm', G:'8mm', K:'24.5mm',
+    boltSize:'M20', L_shaft:'110mm', keyW:'16mm', keyH:'10mm', typicalKW:'30–45', notes:''
+  },
+  '250M': {
+    H:'250mm', A:'406mm', B:'311mm', C:'250mm', D:'60mm', E:'140mm', F:'18mm', G:'9mm', K:'28mm',
+    boltSize:'M24', L_shaft:'140mm', keyW:'18mm', keyH:'11mm', typicalKW:'45–55', notes:''
+  },
+  '280S': {
+    H:'280mm', A:'457mm', B:'368mm', C:'280mm', D:'65mm', E:'140mm', F:'18mm', G:'9mm', K:'30.5mm',
+    boltSize:'M24', L_shaft:'140mm', keyW:'18mm', keyH:'11mm', typicalKW:'55–75', notes:''
+  },
+  '280M': {
+    H:'280mm', A:'457mm', B:'419mm', C:'280mm', D:'65mm', E:'140mm', F:'18mm', G:'9mm', K:'30.5mm',
+    boltSize:'M24', L_shaft:'140mm', keyW:'18mm', keyH:'11mm', typicalKW:'75–90', notes:''
+  },
+  '315S': {
+    H:'315mm', A:'508mm', B:'406mm', C:'315mm', D:'65mm', E:'140mm', F:'18mm', G:'9mm', K:'35mm',
+    boltSize:'M30', L_shaft:'140mm', keyW:'18mm', keyH:'11mm', typicalKW:'90–110', notes:''
+  },
+  '315M': {
+    H:'315mm', A:'508mm', B:'457mm', C:'315mm', D:'65mm', E:'140mm', F:'18mm', G:'9mm', K:'35mm',
+    boltSize:'M30', L_shaft:'140mm', keyW:'18mm', keyH:'11mm', typicalKW:'110–132', notes:''
+  }
+};
+
+// ── ENCLOSURE DIMENSIONAL REQUIREMENTS ──
+const ENCLOSURE_REQS = {
+  TEFC: {
+    label: 'TEFC — Totally Enclosed Fan Cooled',
+    std: 'NEMA MG1-10 / IEC 60034-5 IP55',
+    ipEquiv: 'IP55 (NEMA) / IP55 (IEC)',
+    coolingCode: 'IC411 (IEC 60034-6)',
+    notes: [
+      { type:'std', icon:'📏', text:'External cooling fin height must provide ≥15% of total motor surface area for heat dissipation', std:'MG1-10.32' },
+      { type:'std', icon:'🔩', text:'Fan guard opening: max slot width 0.75" (19mm) in any direction per NEMA enclosure requirements', std:'MG1-10.31' },
+      { type:'std', icon:'📐', text:'Conduit box must be on right side of motor (when facing drive end) — center of box within ±1.5" of frame centerline', std:'MG1-4.12' },
+      { type:'warn', icon:'⚠️', text:'Condensation drain plugs required in bottom of frame when installed outdoors — position at 180° from conduit box', std:'MG1-10.36' },
+      { type:'std', icon:'🔧', text:'End bracket fits per NEMA: register bore (spigot) diameter tolerance ±0.001" on each side for bearing housing', std:'MG1-4.4' },
+      { type:'std', icon:'📦', text:'Fan cover fasteners must be captured (cannot fall into motor) per safety requirements', std:'UL 1004' },
+    ],
+    extraDims: { 'Fin Min Depth':'≥ 0.375" (NEMA) / 8mm (IEC)', 'Fan OD/Frame OD Ratio':'Typically 0.85–0.95', 'Guard Slot Max':'0.75" width', 'Drain Plug':'NPT ¼" or M20 (IEC)' }
+  },
+  TEAO: {
+    label: 'TEAO — Totally Enclosed Air Over',
+    std: 'NEMA MG1-10 / IEC 60034-5 IP54',
+    ipEquiv: 'IP54',
+    coolingCode: 'IC418 (IEC 60034-6)',
+    notes: [
+      { type:'std', icon:'💨', text:'No external fan — motor relies on external airflow. Min external airflow velocity specified on nameplate (typically 500–1500 FPM)', std:'MG1-10.38' },
+      { type:'warn', icon:'⚠️', text:'Frame surface must be smooth/unfinned or lightly finned; standard fin requirement waived per TEAO design', std:'MG1-10' },
+      { type:'std', icon:'📐', text:'Air inlet and outlet openings must be arranged to prevent direct water splash — no openings within 5° of vertical down', std:'MG1-10.37' },
+      { type:'crit', icon:'🚫', text:'Not suitable for still-air or low-airflow environments — verify external airflow in application before use', std:'MG1-10.38' },
+    ],
+    extraDims: { 'Min Airflow':'Per nameplate (500–1500 FPM)', 'IP Rating':'IP54 (IEC)', 'Frame Finish':'Smooth or light fin', 'Drain':'Required — bottom of frame' }
+  },
+  TENV: {
+    label: 'TENV — Totally Enclosed Non-Ventilated',
+    std: 'NEMA MG1-10 / IEC 60034-5 IP65',
+    ipEquiv: 'IP65',
+    coolingCode: 'IC410 (IEC 60034-6)',
+    notes: [
+      { type:'std', icon:'🏗️', text:'Frame must have maximum external surface area (deep fins or large radiating area) as sole cooling path', std:'MG1-10' },
+      { type:'std', icon:'🔒', text:'All joints sealed against 6.3mm diameter solid objects and water jets from any direction (IP65)', std:'IEC 60529' },
+      { type:'std', icon:'📏', text:'Shaft seal must prevent water ingress at seal lip under 12.5 l/min water jet from any angle — typically double-lip TC seal', std:'IEC 60034-5' },
+      { type:'warn', icon:'⚠️', text:'No drain plug allowed — any water that enters must be prevented at seal. Verify seal contact pressure and material', std:'IEC 60529' },
+    ],
+    extraDims: { 'IP Rating':'IP65', 'Shaft Seal':'Double-lip TC (labyrinth for >1800 RPM)', 'Min Fin Area':'Per thermal model — typically 25% more than TEFC', 'Drain':'None allowed (IP65)' }
+  },
+  ODP: {
+    label: 'ODP — Open Drip-Proof',
+    std: 'NEMA MG1-10.21 / IEC IP23',
+    ipEquiv: 'IP23',
+    coolingCode: 'IC01 (IEC 60034-6)',
+    notes: [
+      { type:'std', icon:'💧', text:'Ventilation openings: max 0.75" (19mm) in any direction, angled to prevent liquid drops falling at angles 0–15° from vertical', std:'MG1-10.21' },
+      { type:'std', icon:'📐', text:'End bracket ventilation openings must be uniform — no single opening > 0.75" in smallest dimension', std:'MG1-10.21' },
+      { type:'warn', icon:'⚠️', text:'Not for outdoor use or wet/contaminated environments. Minimum protection only — indoor, clean air required', std:'MG1-10' },
+      { type:'std', icon:'🌡️', text:'Ambient air must be clean and dry — filter-covered openings may be added but reduce airflow; derate thermal accordingly', std:'MG1-14' },
+    ],
+    extraDims: { 'IP Rating':'IP23 (IEC)', 'Opening Max':'0.75" any dimension', 'Vent Angle':'0–15° from vertical', 'Drain':'Not required (open frame)' }
+  },
+  WP1: {
+    label: 'WP-I — Weather Protected Type I',
+    std: 'NEMA MG1-10.26',
+    ipEquiv: 'IP23W',
+    coolingCode: 'IC01',
+    notes: [
+      { type:'std', icon:'🌧️', text:'Ventilation passages designed to minimize entrance of rain, snow, and airborne particles — baffled inlet required', std:'MG1-10.26' },
+      { type:'std', icon:'📐', text:'Openings limited to 0.75" and arranged so 85° arc sweep from vertical prevents direct wind-driven rain entry', std:'MG1-10.26' },
+      { type:'std', icon:'🔧', text:'Drainage provisions for condensate required at bottom of motor casing', std:'MG1-10.26' },
+    ],
+    extraDims: { 'IP Rating':'IP23W', 'Vent Baffling':'Required', 'Opening Max':'0.75" any direction', 'Rain Angle':'85° arc protection' }
+  },
+  EXPRF: {
+    label: 'Explosion Proof (Class I, Div 1)',
+    std: 'UL 674 / NEMA MG1-10 / IEC 60079-1',
+    ipEquiv: 'IP66',
+    coolingCode: 'IC411 / IC416',
+    notes: [
+      { type:'crit', icon:'🔥', text:'All joints must have flame path length and clearance per UL 674 Table 1 — minimum 1" (25mm) path length for Group D gases', std:'UL 674' },
+      { type:'crit', icon:'📏', text:'Flame path clearance (gap): ≤ 0.0015" (0.038mm) for Groups A/B; ≤ 0.004" (0.10mm) for Groups C/D', std:'UL 674 / IEC 60079-1' },
+      { type:'std', icon:'🔩', text:'All external fasteners must be Grade 5 minimum or stainless; no material that can cause sparks on contact', std:'UL 674' },
+      { type:'crit', icon:'⚠️', text:'Conduit seal fittings within 18" of motor — Sealtite or rigid conduit. NO flexible conduit at motor entry', std:'NEC 501.15' },
+      { type:'std', icon:'🏷️', text:'Nameplate must show: Class, Group, Division, temperature code (T-code), and UL/CSA file number', std:'UL 674 / NEC 500' },
+      { type:'warn', icon:'🔧', text:'Shaft seal: external labyrinth + lip seal combination. Bearing housing to maintain positive pressure gradient to prevent gas ingress', std:'UL 674' },
+      { type:'std', icon:'📐', text:'Conduit box: threaded entries only (NPT), all unused entries plugged with explosion-proof plugs', std:'NEC 501.15(A)' },
+    ],
+    extraDims: { 'Flame Path Min':'1.0" length (Group D)', 'Gap Max (Group D)':'0.004" (0.10mm)', 'IP Rating':'IP66 min', 'Conduit Entry':'NPT threaded only', 'Temp Code':'T2B–T4A per class' }
+  },
+  IP55: {
+    label: 'IP55 — IEC Dust + Water Jet Protection',
+    std: 'IEC 60529 IP55 / IEC 60034-5',
+    ipEquiv: 'IP55 ≈ NEMA TEFC',
+    coolingCode: 'IC411',
+    notes: [
+      { type:'std', icon:'💧', text:'IP5X — dust protected: no harmful deposits; tested with 1–2 m/s air + talc for 8h per IEC 60529 §13.4', std:'IEC 60529' },
+      { type:'std', icon:'🚿', text:'IPX5 — water jet: 12.5 l/min jet from 3m distance at any angle for 3 min per IEC 60529 §14.3', std:'IEC 60529' },
+      { type:'std', icon:'🔒', text:'Shaft seal must withstand water jet without ingress. IEC 60034-5 Annex B defines enhanced shaft seal test', std:'IEC 60034-5' },
+      { type:'std', icon:'📐', text:'Terminal box (conduit box) independently IP55 rated — gasket material: NBR or EPDM, min 3mm cross-section', std:'IEC 60034-5' },
+    ],
+    extraDims: { 'Dust Test':'IP5X — 1–2 m/s air/talc 8h', 'Water Test':'12.5 l/min jet 3 min', 'Gasket':'NBR/EPDM min 3mm', 'Drain':'Breather/drain valve at bottom' }
+  },
+  IP66: {
+    label: 'IP66 — IEC Enhanced Dust + High-Pressure Jet',
+    std: 'IEC 60529 IP66 / IEC 60034-5',
+    ipEquiv: 'IP66 ≈ NEMA Type 4',
+    coolingCode: 'IC411 or IC416',
+    notes: [
+      { type:'std', icon:'💧', text:'IP6X — totally dust tight: zero dust ingress; tested with high-vacuum talc test for 8h per IEC 60529 §13.6', std:'IEC 60529' },
+      { type:'std', icon:'🚿', text:'IPX6 — powerful water jet: 100 l/min jet from 3m distance at any angle for 3 min per IEC 60529 §14.4', std:'IEC 60529' },
+      { type:'std', icon:'🔒', text:'All cable entries and shaft openings must be sealed with IP66-rated components independently tested', std:'IEC 60529' },
+      { type:'warn', icon:'⚠️', text:'Gasket compression force critical — verify bolt torque per gasket manufacturer. Over-compression collapses gasket and reduces IP rating', std:'IEC 60034-5' },
+      { type:'std', icon:'📐', text:'Terminal box: stainless or corrosion-protected fasteners; gasket track depth min 4mm; cover flatness ≤ 0.2mm', std:'IEC 60034-5 Annex B' },
+    ],
+    extraDims: { 'Dust Test':'IP6X — total, zero ingress', 'Water Test':'100 l/min jet 3 min', 'Gasket Depth':'Min 4mm groove', 'Cover Flatness':'≤ 0.2mm' }
+  }
+};
+
+// ── MOUNTING CONFIGURATIONS ──
+const MOUNTING_REQS = {
+  F1: {
+    label: 'F-1 Rigid Foot Mount',
+    std: 'NEMA MG1-4.4',
+    dims: [
+      { key:'Foot Pad Width', desc:'Width of each foot mounting pad (machined flat)', tol:'±0.010"', note:'Per 2F spacing' },
+      { key:'Foot Flatness', desc:'Co-planarity of all four mounting feet', tol:'0.003" max', note:'MG1-4.4 / ISO 1101' },
+      { key:'Foot Parallelism', desc:'Feet parallel to shaft centerline', tol:'0.005" per foot length', note:'NEMA MG1' },
+      { key:'Bolt Pattern', desc:'Bolt hole pattern per NEMA frame designation (BA dimension)', tol:'±0.015" true pos.', note:'MG1-4.4 Table' },
+      { key:'Bolt Hole Dia.', desc:'Clearance hole for mounting bolts', tol:'+0.031" / -0.000"', note:'NEMA allows J-slotting' },
+    ]
+  },
+  C: {
+    label: 'C-Face Flange Mount',
+    std: 'NEMA MG1-4.4 / C-Face Standard',
+    dims: [
+      { key:'Rabbet Dia. (AJ)', desc:'Pilot/register diameter for C-face flange', tol:'+0.000" / -0.002"', note:'Per frame size table' },
+      { key:'Bolt Circle (AK)', desc:'Bolt circle diameter on C-face', tol:'±0.005"', note:'MG1-4.4' },
+      { key:'Bolt Qty & Size', desc:'Number and size of through-bolts', tol:'Per frame', note:'182T=4×½", 256T=4×½"' },
+      { key:'Rabbet Depth', desc:'Depth of pilot register engagement', tol:'0.125"–0.188" min', note:'MG1-4.4' },
+      { key:'Face Flatness', desc:'Flange face perpendicularity to shaft', tol:'0.001" TIR per inch dia.', note:'MG1-4.4' },
+      { key:'Face Runout', desc:'Face runout at flange OD', tol:'0.003" max TIR', note:'MG1-4.4' },
+    ]
+  },
+  D: {
+    label: 'D-Flange Mount',
+    std: 'NEMA MG1-4.4 / D-Flange Standard',
+    dims: [
+      { key:'Flange OD (AK)', desc:'Outer diameter of D-flange', tol:'+0.000" / -0.002"', note:'Per frame size' },
+      { key:'Bolt Circle', desc:'Bolt circle for mounting studs/bolts', tol:'±0.005"', note:'MG1-4.4' },
+      { key:'Register Bore', desc:'Pilot bore (rabbet) fits into pump/gearbox', tol:'+0.000" / -0.002"', note:'Interference with pump housing' },
+      { key:'Pilot Length', desc:'Engagement depth of register', tol:'Min 0.188"', note:'Ensures concentricity' },
+      { key:'Face Square', desc:'Flange face perpendicular to shaft axis', tol:'0.0005" per 1" radius', note:'MG1-4.4' },
+    ]
+  },
+  B5: {
+    label: 'B5 Flange (IEC) — Large Flange',
+    std: 'IEC 60072-1 / IEC 60034-7',
+    dims: [
+      { key:'Flange Dia. (M)', desc:'Outer flange diameter (spigot OD)', tol:'h6 tolerance', note:'IEC 60072-1 Table' },
+      { key:'Pilot Dia. (N)', desc:'Register/spigot diameter for centering', tol:'j6 or k6', note:'IEC 60072-1' },
+      { key:'Bolt Circle (P)', desc:'Bolt hole pitch circle', tol:'±0.1mm', note:'IEC 60072-1' },
+      { key:'Bolt Holes (S)', desc:'Mounting hole size (clearance)', tol:'H12', note:'4 holes standard' },
+      { key:'Face Runout', desc:'Flange face runout to shaft axis', tol:'0.05mm TIR per 100mm dia.', note:'IEC 60034-7' },
+      { key:'Spigot Runout', desc:'Spigot OD concentricity to shaft', tol:'0.025mm TIR', note:'IEC 60034-7' },
+    ]
+  },
+  B14: {
+    label: 'B14 Face (IEC) — Small Flange',
+    std: 'IEC 60072-1 / IEC 60034-7',
+    dims: [
+      { key:'Spigot OD (M)', desc:'Small face spigot outer diameter', tol:'j6 fit', note:'IEC 60072-1' },
+      { key:'Bolt Circle (P)', desc:'Threaded hole pitch circle', tol:'±0.05mm', note:'IEC 60072-1' },
+      { key:'Thread Size', desc:'Threaded insert size (M4–M12 per frame)', tol:'6H thread tolerance', note:'Per frame table' },
+      { key:'Face Flatness', desc:'Flatness of mounting face', tol:'0.1mm / 100mm', note:'IEC 60034-7' },
+      { key:'Face Perp.', desc:'Face perpendicularity to shaft axis', tol:'0.03mm TIR', note:'IEC 60034-7' },
+    ]
+  },
+  B3: {
+    label: 'B3 Foot Mount (IEC)',
+    std: 'IEC 60072-1',
+    dims: [
+      { key:'Foot Length (A)', desc:'Distance between foot bolt holes (longitudinal)', tol:'±0.5mm', note:'IEC 60072-1' },
+      { key:'Foot Width (B)', desc:'Distance between foot bolt holes (lateral)', tol:'±0.3mm', note:'IEC 60072-1' },
+      { key:'Shaft Height (H)', desc:'Shaft centerline above foot datum', tol:'±0.5mm', note:'IEC 60072-1' },
+      { key:'Foot Coplanarity', desc:'All four feet in same plane', tol:'0.08mm per 100mm', note:'ISO 1101' },
+      { key:'Hole Dia. (K)', desc:'Foot bolt clearance hole diameter', tol:'H14', note:'Per frame table' },
+    ]
+  },
+  P: {
+    label: 'P-Base Mount (NEMA)',
+    std: 'NEMA MG1-4.4',
+    dims: [
+      { key:'Base Width', desc:'Width across P-base mounting pads', tol:'±0.020"', note:'MG1-4.4' },
+      { key:'Base Length', desc:'Longitudinal dimension of mounting base', tol:'±0.020"', note:'Per frame' },
+      { key:'Pad Flatness', desc:'Co-planarity of all mounting pads', tol:'0.005" max', note:'MG1-4.4' },
+    ]
+  }
+};
+
+// ── SHAFT TOLERANCE TABLE (NEMA MG1-4.4 / IEC 60034-14) ──
+const SHAFT_TOLERANCES = {
+  NEMA: {
+    runout: 'Max 0.001" TIR at any point on shaft extension (MG1-4.4.1)',
+    extension_tol: '+0.000" / -0.0005" on diameter (MG1-4.4)',
+    keyway: 'Width: +0.000" / -0.001"; Depth: +0.002" / -0.000" (MG1-4.4)',
+    key_fit: 'Clearance fit: 0.000"–0.002" on width',
+    concentricity: 'Shaft OD concentric with bearing seats: 0.001" TIR (MG1-4.4)',
+  },
+  IEC: {
+    runout: 'Max 0.025mm TIR at free end per IEC 60034-14',
+    shaft_fit: 'Shaft diameter: k6 or j6 tolerance (IEC 60072-1)',
+    keyway: 'Width: JS9; Depth: P9 fit tolerance per ISO 286',
+    key_fit: 'N9/h9 — normal fit for standard keyway coupling',
+    concentricity: 'Shaft concentric with register: 0.02mm TIR (IEC 60034-14)',
+  }
+};
+
+// Populate frame dropdowns on page load
+let currentSystem = 'NEMA';
+
+function setSystem(sys) {
+  currentSystem = sys;
+  document.getElementById('sysNEMA').classList.toggle('active', sys === 'NEMA');
+  document.getElementById('sysIEC').classList.toggle('active', sys === 'IEC');
+
+  const sel = document.getElementById('dimFrame');
+  sel.innerHTML = '<option value="">— Select Frame —</option>';
+
+  const frames = sys === 'NEMA' ? NEMA_FRAMES : IEC_FRAMES;
+  Object.keys(frames).forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f;
+    const d = frames[f];
+    const hpLabel = sys === 'NEMA' ? ` (${d.typicalHP} HP)` : ` (${d.typicalKW} kW)`;
+    opt.textContent = `${sys === 'IEC' ? 'IEC ' : 'NEMA '}${f}${hpLabel}`;
+    sel.appendChild(opt);
+  });
+
+  // Update mounting options visibility
+  const mountSel = document.getElementById('dimMounting');
+  if (sys === 'NEMA') {
+    [...mountSel.options].forEach(o => {
+      o.style.display = (o.value === 'B5' || o.value === 'B14' || o.value === 'B3') ? 'none' : '';
+    });
+    if (!['F1','C','D','P'].includes(mountSel.value)) mountSel.value = 'F1';
+  } else {
+    [...mountSel.options].forEach(o => {
+      o.style.display = (o.value === 'C' || o.value === 'D' || o.value === 'P') ? 'none' : '';
+    });
+    if (!['F1','B5','B14','B3'].includes(mountSel.value)) mountSel.value = 'B3';
+  }
+
+  document.getElementById('dimReport').style.display = 'none';
+  document.getElementById('dimDefaultState').style.display = 'flex';
+}
+
+function onFrameChange() {
+  const fr = document.getElementById('dimFrame').value;
+  if (fr) runDimLookup();
+}
+
+function quickDimExample(sys, frame, enc, mount) {
+  setSystem(sys);
+  setTimeout(() => {
+    document.getElementById('dimFrame').value = frame;
+    document.getElementById('dimEnclosure').value = enc;
+    document.getElementById('dimMounting').value = mount;
+    runDimLookup();
+  }, 50);
+}
+
+function runDimLookup() {
+  const frame = document.getElementById('dimFrame').value;
+  const enc = document.getElementById('dimEnclosure').value;
+  const mount = document.getElementById('dimMounting').value;
+
+  if (!frame || !enc || !mount) return;
+
+  const frameData = currentSystem === 'NEMA' ? NEMA_FRAMES[frame] : IEC_FRAMES[frame];
+  const encData = ENCLOSURE_REQS[enc] || ENCLOSURE_REQS['TEFC'];
+  const mountData = MOUNTING_REQS[mount] || MOUNTING_REQS['F1'];
+  const shaftTol = SHAFT_TOLERANCES[currentSystem];
+
+  document.getElementById('dimDefaultState').style.display = 'none';
+  const report = document.getElementById('dimReport');
+  report.style.display = 'block';
+
+  const isNEMA = currentSystem === 'NEMA';
+  const frameLabel = isNEMA ? `NEMA ${frame}` : `IEC ${frame}`;
+  const stdRef = isNEMA ? 'NEMA MG1-2022 Part 4' : 'IEC 60072-1:2017';
+
+  // Build main dimensions table rows
+  let dimRows = '';
+  if (isNEMA && frameData) {
+    const dims = [
+      { k:'D', desc:'Shaft centerline height above foot', v: frameData.D, tol:'Ref', tolType:'standard' },
+      { k:'E', desc:'Overall bearing-to-bearing length', v: frameData.E, tol:'±0.015"', tolType:'standard' },
+      { k:'2F', desc:'Foot bolt hole spacing (length)', v: frameData['2F'], tol:'±0.015"', tolType:'standard' },
+      { k:'BA', desc:'Foot bolt hole spacing (width)', v: frameData.BA, tol:'±0.010"', tolType:'tight' },
+      { k:'H', desc:'Foot bolt hole diameter', v: frameData.H, tol:'+0.031" / -0.000"', tolType:'loose' },
+      { k:'N–W', desc:'Shaft extension length', v: frameData.N_W, tol:'+0.000" / -0.010"', tolType:'standard' },
+      { k:'U', desc:'Shaft extension diameter', v: frameData.U, tol:'+0.000" / -0.0005"', tolType:'tight' },
+      { k:'V min', desc:'Drive end bearing length (shaft usable)', v: frameData.V_min, tol:'Min value', tolType:'standard' },
+      { k:'Key W', desc:'Keyway width', v: frameData.keyW, tol:'+0.000" / -0.001"', tolType:'tight' },
+      { k:'Key H', desc:'Keyway depth', v: frameData.keyH, tol:'+0.002" / -0.000"', tolType:'standard' },
+      { k:'Bearing DE', desc:'Drive End bearing designation', v: frameData.bearingDE, tol:'AFBMA Std 9', tolType:'standard' },
+      { k:'Bearing NDE', desc:'Non-Drive End bearing designation', v: frameData.bearingNDE, tol:'AFBMA Std 9', tolType:'standard' },
+    ];
+    dimRows = dims.map(d => `
+      <div class="dim-row">
+        <span class="dr-key">${d.k}</span>
+        <span class="dr-desc">${d.desc}</span>
+        <span class="dr-val">${d.v}</span>
+        <span class="tol-badge tol-${d.tolType}">${d.tol}</span>
+      </div>`).join('');
+  } else if (!isNEMA && frameData) {
+    const dims = [
+      { k:'H', desc:'Shaft centerline height (frame size)', v: frameData.H, tol:'±0.5mm', tolType:'standard' },
+      { k:'A', desc:'Foot bolt hole spacing (length)', v: frameData.A, tol:'±0.5mm', tolType:'standard' },
+      { k:'B', desc:'Foot bolt hole spacing (width)', v: frameData.B, tol:'±0.3mm', tolType:'tight' },
+      { k:'C', desc:'Overall width at foot level', v: frameData.C, tol:'Ref', tolType:'standard' },
+      { k:'D', desc:'Shaft extension diameter', v: frameData.D, tol:'k6', tolType:'tight' },
+      { k:'E', desc:'Shaft extension length', v: frameData.E, tol:'+0 / -0.5mm', tolType:'tight' },
+      { k:'F', desc:'Keyway width', v: frameData.F, tol:'JS9', tolType:'standard' },
+      { k:'G', desc:'Keyway depth (shaft to key top)', v: frameData.G, tol:'P9', tolType:'tight' },
+      { k:'K', desc:'Foot bolt clearance hole diameter', v: frameData.K, tol:'H14', tolType:'loose' },
+      { k:'Bolt', desc:'Mounting bolt size recommendation', v: frameData.boltSize, tol:'Per hole', tolType:'standard' },
+      { k:'L shaft', desc:'Usable shaft length for coupling', v: frameData.L_shaft, tol:'Min value', tolType:'standard' },
+      { k:'Key W', desc:'Key width', v: frameData.keyW, tol:'h9', tolType:'standard' },
+      { k:'Key H', desc:'Key height', v: frameData.keyH, tol:'h11', tolType:'standard' },
+    ];
+    dimRows = dims.map(d => `
+      <div class="dim-row">
+        <span class="dr-key">${d.k}</span>
+        <span class="dr-desc">${d.desc}</span>
+        <span class="dr-val">${d.v}</span>
+        <span class="tol-badge tol-${d.tolType}">${d.tol}</span>
+      </div>`).join('');
+  }
+
+  // Enclosure extra dims
+  const encExtraRows = Object.entries(encData.extraDims || {}).map(([k,v]) => `
+    <div class="dim-row">
+      <span class="dr-key" style="font-size:10px;">${k}</span>
+      <span class="dr-desc"></span>
+      <span class="dr-val">${v}</span>
+      <span class="tol-badge tol-standard">Reqd.</span>
+    </div>`).join('');
+
+  // Mounting dim rows
+  const mountRows = (mountData.dims || []).map(d => `
+    <div class="dim-row">
+      <span class="dr-key">${d.key}</span>
+      <span class="dr-desc">${d.desc}</span>
+      <span class="dr-val">${d.tol}</span>
+      <span class="tol-badge tol-tight" style="font-size:8px;">${d.note}</span>
+    </div>`).join('');
+
+  // Enclosure notes
+  const encNoteHTML = encData.notes.map(n => `
+    <div class="enc-note note-${n.type}">
+      <span class="en-icon">${n.icon}</span>
+      <span>${n.text}</span>
+      <span class="en-std">${n.std}</span>
+    </div>`).join('');
+
+  // Shaft tolerance section
+  const shaftHTML = Object.entries(shaftTol).map(([k,v]) => `
+    <div class="dim-row">
+      <span class="dr-key" style="font-size:10px;white-space:normal;line-height:1.2;">${k.replace(/_/g,' ')}</span>
+      <span class="dr-desc" style="grid-column:2/5;">${v}</span>
+    </div>`).join('');
+
+  // Inline SVG diagram
+  const svgDiagram = buildFrameSVG(frame, frameData, isNEMA);
+
+  const hp = isNEMA ? (frameData?.typicalHP || '—') : (frameData?.typicalKW || '—');
+  const hpUnit = isNEMA ? 'HP' : 'kW';
+
+  report.innerHTML = `
+    <div class="report-title-bar">
+      <div class="rtb-left">
+        <h2>${frameLabel} · ${encData.label.split('—')[0].trim()} · ${mountData.label}</h2>
+        <p>Dimensional Standard: ${stdRef} · Enclosure: ${encData.std} · Mounting: ${mountData.std} · Typical Power: ${hp} ${hpUnit}</p>
+      </div>
+      <div class="rtb-badges">
+        <span class="badge badge-nema">${isNEMA ? 'NEMA' : 'IEC'}</span>
+        <span class="badge badge-iec" style="color:var(--cyan)">${encData.ipEquiv}</span>
+        <button class="ask-ai-dim-btn" onclick="askAIDimAnalysis('${frame}','${enc}','${mount}','${isNEMA}')">
+          🤖 Ask AI for Deep Analysis
+        </button>
+      </div>
+    </div>
+
+    <div class="compliance-banner cb-ok">
+      <div class="cb-icon">✅</div>
+      <div class="cb-text">
+        <h4>Standards Compliance Path: ${frameLabel} + ${encData.label.split('—')[0].trim()}</h4>
+        <p>Governing documents: ${stdRef} · ${encData.std} · ${mountData.std} · ${isNEMA ? 'IEEE 841 (if applicable)' : 'IEC 60034-14 (vibration)'}</p>
+      </div>
+    </div>
+
+    <div class="dim-report-grid">
+
+      <!-- Frame Dimensions -->
+      <div class="dim-card">
+        <div class="dim-card-hdr">
+          <div class="dim-card-hdr-left" style="color:var(--cyan)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/></svg>
+            Frame Dimensions
+          </div>
+          <div class="dim-card-hdr-right">${stdRef}</div>
+        </div>
+        <div class="dim-card-body">
+          ${dimRows || '<p style="color:var(--text-dim);font-size:12px;">Frame data not available for this selection.</p>'}
+          ${frameData?.notes ? `<div style="margin-top:8px;padding:6px 8px;background:var(--bg-surface);border-radius:3px;font-size:11px;color:var(--text-secondary);border-left:2px solid var(--amber);">${frameData.notes}</div>` : ''}
+        </div>
+      </div>
+
+      <!-- Schematic Diagram -->
+      <div class="dim-card">
+        <div class="dim-card-hdr">
+          <div class="dim-card-hdr-left" style="color:var(--amber)">
+            📐 Dimensional Schematic
+          </div>
+          <div class="dim-card-hdr-right">Ref: ${isNEMA ? 'MG1 Fig 4-1' : 'IEC 60072 Fig 1'}</div>
+        </div>
+        <div class="dim-card-body dim-diagram-area">
+          ${svgDiagram}
+        </div>
+      </div>
+
+      <!-- Enclosure Requirements -->
+      <div class="dim-card">
+        <div class="dim-card-hdr">
+          <div class="dim-card-hdr-left" style="color:var(--blue)">
+            🛡️ Enclosure Design Requirements
+          </div>
+          <div class="dim-card-hdr-right">${encData.std}</div>
+        </div>
+        <div class="dim-card-body">
+          <div class="enc-notes">${encNoteHTML}</div>
+          <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border-dim);">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Key Dimensional Requirements</div>
+            ${encExtraRows}
+          </div>
+        </div>
+      </div>
+
+      <!-- Mounting Dimensions -->
+      <div class="dim-card">
+        <div class="dim-card-hdr">
+          <div class="dim-card-hdr-left" style="color:var(--green)">
+            🔩 Mounting Interface Tolerances
+          </div>
+          <div class="dim-card-hdr-right">${mountData.std}</div>
+        </div>
+        <div class="dim-card-body">
+          ${mountRows || '<p style="color:var(--text-dim);font-size:12px;">See standard for mounting details.</p>'}
+        </div>
+      </div>
+
+      <!-- Shaft Tolerances -->
+      <div class="dim-card dim-report-full">
+        <div class="dim-card-hdr">
+          <div class="dim-card-hdr-left" style="color:var(--amber)">
+            ⚙️ Shaft & Keyway Tolerances
+          </div>
+          <div class="dim-card-hdr-right">${isNEMA ? 'NEMA MG1-4.4 / AFBMA Std 9' : 'IEC 60034-14 / IEC 60072-1 / ISO 286'}</div>
+        </div>
+        <div class="dim-card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+            ${shaftHTML}
+          </div>
+          <div class="alert-box alert-info" style="margin-top:10px;">
+            <span>ℹ️</span>
+            <span style="font-size:11px;">For interference-fit couplings: verify shaft temperature rise under load to prevent thermally-induced loosening. ${isNEMA ? 'Use AGMA 9002 for coupling hub bore fits.' : 'IEC 60034-14 Annex A — check coupling hub bore to k6 shaft fit.'}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conduit Box Position Standard -->
+      <div class="dim-card dim-report-full">
+        <div class="dim-card-hdr">
+          <div class="dim-card-hdr-left" style="color:var(--cyan)">
+            🔌 Conduit / Terminal Box Position Requirements
+          </div>
+          <div class="dim-card-hdr-right">${isNEMA ? 'NEMA MG1-4.12' : 'IEC 60034-8'}</div>
+        </div>
+        <div class="dim-card-body">
+          <div class="enc-notes">
+            <div class="enc-note note-std">
+              <span class="en-icon">📐</span>
+              <span>${isNEMA ? 'Standard position: top of motor (12 o\'clock) or right side when facing drive end. Center of box within ±1.5" of longitudinal centerline of motor.' : 'IEC terminal box: D1 (top) standard. Rotation in 90° steps permissible per IEC 60034-8. Center offset limited to ±2% of frame H dimension.'}</span>
+              <span class="en-std">${isNEMA ? 'MG1-4.12' : 'IEC 60034-8'}</span>
+            </div>
+            <div class="enc-note note-std">
+              <span class="en-icon">🔌</span>
+              <span>${isNEMA ? 'Conduit entries: 1/2" NPT for ≤ 1HP; 3/4" NPT for 1.5–25 HP; 1" NPT for 30–100HP. Dual entries for motors ≥ 30HP.' : 'Cable gland entries: M20 for frames ≤ 132; M25 for 160–200; M32 for 225–315. PG threads or metric per IEC 60034-8.'}</span>
+              <span class="en-std">${isNEMA ? 'MG1-4.12' : 'IEC 60034-8'}</span>
+            </div>
+            <div class="enc-note note-std">
+              <span class="en-icon">🏷️</span>
+              <span>${isNEMA ? 'Terminal markings: T1, T2, T3 (3-phase) per NEMA MG1-2.22. For dual voltage: T1–T12. Ground terminal marked "GND" or green/yellow per NEC 430.' : 'Terminal markings: U1, V1, W1 (IEC 60034-8). Protective earth (PE) terminal: green-yellow. Dual voltage: U1-U2, V1-V2, W1-W2.'}</span>
+              <span class="en-std">${isNEMA ? 'MG1-2.22 / NEC 430' : 'IEC 60034-8'}</span>
+            </div>
+            ${enc === 'EXPRF' ? `<div class="enc-note note-crit"><span class="en-icon">🔥</span><span>Explosion-proof conduit box: ALL entries must be threaded NPT. Unused entries sealed with XP-rated plugs. Box independently UL 674 rated. Conduit seal required within 18" of motor entry per NEC 501.15.</span><span class="en-std">NEC 501 / UL 674</span></div>` : ''}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="padding:10px 12px;background:var(--bg-panel);border:1px solid var(--border-dim);border-radius:5px;font-size:11px;color:var(--text-dim);margin-top:4px;">
+      <strong style="color:var(--text-secondary);">Reference Standards Governing This Report:</strong>
+      ${isNEMA ? 'NEMA MG1-2022 (Part 4 — Dimensions), NEMA MG1-10 (Enclosures), NEMA MG1-2 (Markings), AFBMA Std 9 (Bearings), AGMA 9002 (Shaft Fits), NEC Article 430 (Motor Circuits), UL 1004 (Motor Construction)' + (enc==='EXPRF'?' + UL 674 (Explosion Proof) + NEC 501 (HazLoc)':'') : 'IEC 60072-1:2017 (Dimensions), IEC 60034-5 (IP Degrees), IEC 60034-6 (Cooling), IEC 60034-7 (Classification), IEC 60034-8 (Terminal Markings), IEC 60034-14 (Vibration), ISO 286 (Tolerances), ISO 1101 (Geometric Tolerances)'}
+    </div>
+  `;
+
+  report.scrollIntoView({ behavior: 'smooth' });
+}
+
+function buildFrameSVG(frame, data, isNEMA) {
+  const sw = 360, sh = 190;
+  const mx = 30, my = 20;
+  const fw = 280, fh = 100;
+  const cy = my + fh / 2;
+  const shaftY = cy;
+
+  // shaft centerline height line
+  const shaftD = isNEMA ? (parseFloat(data?.D) || 6) : (parseInt(data?.H) || 160) / 25.4;
+  const shaftU = isNEMA ? (parseFloat(data?.U) || 1.5) : (parseInt(data?.D) || 42) / 25.4;
+  const shaft2F = isNEMA ? (parseFloat(data?.['2F']) || 15) : (parseInt(data?.A) || 250) / 25.4;
+  const shaftN = isNEMA ? (parseFloat(data?.N_W) || 3.5) : (parseInt(data?.E) || 90) / 25.4;
+
+  const scale = Math.min(fw / (shaft2F + 4), fh / (shaftD * 2 + 1), 14);
+  const bodyW = shaft2F * scale;
+  const bodyH = shaftD * 2 * scale * 0.5;
+  const bx = mx + (fw - bodyW) / 2;
+  const by = my + (fh - bodyH) / 2;
+  const bcx = bx + bodyW / 2;
+  const bcy = by + bodyH / 2;
+
+  const shaftLen = shaftN * scale;
+  const shaftR = (shaftU / 2) * scale * 1.5;
+
+  return `<svg width="${sw}" height="${sh}" viewBox="0 0 ${sw} ${sh}" xmlns="http://www.w3.org/2000/svg" style="font-family:'Share Tech Mono',monospace;">
+    <!-- Grid lines -->
+    <defs>
+      <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(30,72,107,0.2)" stroke-width="0.5"/>
+      </pattern>
+    </defs>
+    <rect width="${sw}" height="${sh}" fill="url(#grid)"/>
+
+    <!-- Motor body -->
+    <rect x="${bx}" y="${by}" width="${bodyW}" height="${bodyH}" fill="rgba(22,34,50,0.9)" stroke="#2a4a6b" stroke-width="1.5" rx="4"/>
+
+    <!-- End brackets -->
+    <rect x="${bx - 8}" y="${by + 4}" width="10" height="${bodyH - 8}" fill="rgba(30,72,107,0.6)" stroke="#1e9de8" stroke-width="1" rx="2"/>
+    <rect x="${bx + bodyW - 2}" y="${by + 4}" width="10" height="${bodyH - 8}" fill="rgba(30,72,107,0.6)" stroke="#1e9de8" stroke-width="1" rx="2"/>
+
+    <!-- Shaft extension -->
+    <rect x="${bx + bodyW + 8}" y="${bcy - shaftR}" width="${shaftLen}" height="${shaftR * 2}" fill="rgba(245,166,35,0.3)" stroke="#f5a623" stroke-width="1.5" rx="2"/>
+
+    <!-- Shaft keyway -->
+    <rect x="${bx + bodyW + 8 + shaftLen * 0.2}" y="${bcy - shaftR}" width="${shaftLen * 0.55}" height="${shaftR * 0.5}" fill="rgba(245,166,35,0.5)" stroke="#f5a623" stroke-width="1"/>
+
+    <!-- Cooling fins (if TEFC) -->
+    ${[0.15,0.28,0.41,0.54,0.67,0.80].map(p => `
+      <line x1="${bx + bodyW*p}" y1="${by - 8}" x2="${bx + bodyW*p}" y2="${by}" stroke="#1e7fc4" stroke-width="2"/>
+      <line x1="${bx + bodyW*p}" y1="${by + bodyH}" x2="${bx + bodyW*p}" y2="${by + bodyH + 8}" stroke="#1e7fc4" stroke-width="2"/>
+    `).join('')}
+
+    <!-- Foot mounting pads -->
+    <rect x="${bx + bodyW * 0.12}" y="${by + bodyH}" width="12" height="8" fill="rgba(45,223,122,0.3)" stroke="#2ddf7a" stroke-width="1"/>
+    <rect x="${bx + bodyW * 0.72}" y="${by + bodyH}" width="12" height="8" fill="rgba(45,223,122,0.3)" stroke="#2ddf7a" stroke-width="1"/>
+    <rect x="${bx + bodyW * 0.12}" y="${by - 8}" width="12" height="8" fill="rgba(45,223,122,0.3)" stroke="#2ddf7a" stroke-width="1"/>
+    <rect x="${bx + bodyW * 0.72}" y="${by - 8}" width="12" height="8" fill="rgba(45,223,122,0.3)" stroke="#2ddf7a" stroke-width="1"/>
+
+    <!-- Bolt holes -->
+    <circle cx="${bx + bodyW * 0.18}" cy="${by + bodyH + 4}" r="2.5" fill="none" stroke="#2ddf7a" stroke-width="1.2"/>
+    <circle cx="${bx + bodyW * 0.78}" cy="${by + bodyH + 4}" r="2.5" fill="none" stroke="#2ddf7a" stroke-width="1.2"/>
+    <circle cx="${bx + bodyW * 0.18}" cy="${by - 4}" r="2.5" fill="none" stroke="#2ddf7a" stroke-width="1.2"/>
+    <circle cx="${bx + bodyW * 0.78}" cy="${by - 4}" r="2.5" fill="none" stroke="#2ddf7a" stroke-width="1.2"/>
+
+    <!-- Conduit box -->
+    <rect x="${bcx - 14}" y="${by - 22}" width="28" height="16" fill="rgba(30,157,232,0.2)" stroke="#1e9de8" stroke-width="1" rx="2"/>
+    <text x="${bcx}" y="${by - 11}" text-anchor="middle" fill="#1e9de8" font-size="7">CB</text>
+
+    <!-- Dimension lines and labels -->
+    <!-- D dimension (shaft height) -->
+    <line x1="${bx - 18}" y1="${by + bodyH + 4}" x2="${bx - 18}" y2="${bcy}" stroke="#0ff4c6" stroke-width="0.8" stroke-dasharray="3,2"/>
+    <line x1="${bx - 22}" y1="${bcy}" x2="${bx - 14}" y2="${bcy}" stroke="#0ff4c6" stroke-width="0.8"/>
+    <text x="${bx - 12}" y="${bcy - 3}" fill="#0ff4c6" font-size="8" text-anchor="end">${isNEMA ? 'D' : 'H'}</text>
+
+    <!-- 2F / A dimension (foot spacing) -->
+    <line x1="${bx + bodyW * 0.18}" y1="${by + bodyH + 16}" x2="${bx + bodyW * 0.78}" y2="${by + bodyH + 16}" stroke="#2ddf7a" stroke-width="0.8"/>
+    <line x1="${bx + bodyW * 0.18}" y1="${by + bodyH + 13}" x2="${bx + bodyW * 0.18}" y2="${by + bodyH + 19}" stroke="#2ddf7a" stroke-width="0.8"/>
+    <line x1="${bx + bodyW * 0.78}" y1="${by + bodyH + 13}" x2="${bx + bodyW * 0.78}" y2="${by + bodyH + 19}" stroke="#2ddf7a" stroke-width="0.8"/>
+    <text x="${bcx}" y="${by + bodyH + 26}" text-anchor="middle" fill="#2ddf7a" font-size="8">${isNEMA ? '2F' : 'A'} = ${isNEMA ? data?.['2F'] : data?.A}</text>
+
+    <!-- U / shaft dia dimension -->
+    <line x1="${bx + bodyW + 8 + shaftLen + 6}" y1="${bcy - shaftR}" x2="${bx + bodyW + 8 + shaftLen + 6}" y2="${bcy + shaftR}" stroke="#f5a623" stroke-width="0.8"/>
+    <text x="${bx + bodyW + 8 + shaftLen + 10}" y="${bcy + 3}" fill="#f5a623" font-size="8">${isNEMA ? 'U' : 'D'}=${isNEMA ? data?.U : data?.D}</text>
+
+    <!-- N-W / shaft length -->
+    <line x1="${bx + bodyW + 8}" y1="${bcy + shaftR + 8}" x2="${bx + bodyW + 8 + shaftLen}" y2="${bcy + shaftR + 8}" stroke="#f5a623" stroke-width="0.8"/>
+    <text x="${bx + bodyW + 8 + shaftLen/2}" y="${bcy + shaftR + 18}" text-anchor="middle" fill="#f5a623" font-size="8">${isNEMA ? 'N–W' : 'E'}</text>
+
+    <!-- Labels -->
+    <text x="${bcx}" y="${bcy + 5}" text-anchor="middle" fill="rgba(200,223,240,0.3)" font-size="9">${isNEMA ? 'NEMA ' : 'IEC '}${frame}</text>
+    <text x="5" y="12" fill="#3d6080" font-size="8">${isNEMA ? 'NEMA MG1-4.4' : 'IEC 60072-1'}</text>
+    <text x="${sw - 5}" y="${sh - 5}" text-anchor="end" fill="#3d6080" font-size="7">Schematic — Not to Scale</text>
+  </svg>`;
+}
+
+function askAIDimAnalysis(frame, enc, mount, isNEMA) {
+  const sys = isNEMA === 'true' ? 'NEMA' : 'IEC';
+  const q = `Provide a detailed dimensional engineering analysis for ${sys} ${frame} frame motor with ${enc} enclosure and ${mount} mounting configuration. Include: (1) critical manufacturing tolerances and GD&T requirements beyond the standard table, (2) common dimensional non-conformances and their consequences, (3) WEG and Marathon specific dimensional variations from NEMA/IEC standards, (4) bearing housing bore tolerances and recommended fits, (5) any special considerations for this specific frame-enclosure combination that a mechanical design engineer should know.`;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.tab').classList.add('active');
+  document.getElementById('tab-chat').classList.add('active');
+  sendMessage(q);
+}
+
+// Initialize frame dropdown on page load
+setSystem('NEMA');
+function handleKey(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+// ── TABS ──
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+// ── CONTEXT CHIPS ──
+function toggleCtx(el) {
+  el.classList.toggle('active');
+}
+
+// ── DIAGNOSTICS ──
+const DIAG_DATA = {
+  overtemp: {
+    title: 'Overtemperature Failure — Root Cause Checklist',
+    color: 'hdr-red',
+    icon: '🌡️',
+    checks: [
+      { cat: 'Load', item: 'Verify actual load vs nameplate FLA — check for overload > 1.0 SF', ref: 'MG1-14.35' },
+      { cat: 'Ambient', item: 'Ambient > 40°C? Apply derating per MG1-14.4 or IEC 60034-1 Cl. 6', ref: 'MG1-14.4' },
+      { cat: 'Altitude', item: 'Altitude > 3300 ft (1000m)? Derate cooling capability 1% per 330 ft', ref: 'MG1-14.4' },
+      { cat: 'Enclosure', item: 'TEFC fins — inspect for blockage, accumulated dust; ODP screen clear?', ref: 'MG1-10' },
+      { cat: 'Ventilation', item: 'External fan rotation — correct direction? Fan blade damage? RPM adequate?', ref: 'Mfr. Data' },
+      { cat: 'VFD', item: 'VFD application at low speed? Forced cooling required below ~30 Hz for TEFC', ref: 'MG1-31.4.4' },
+      { cat: 'Voltage', item: 'Voltage unbalance > 1%? MG1 max 5%, >1% requires derating; check all 3 phases', ref: 'MG1-14.36' },
+      { cat: 'Cycling', item: 'Frequent starts? Each start ≈ full thermal load; check starts/hr vs mfr. limit', ref: 'MG1-12.53' },
+      { cat: 'Insulation', item: 'Run dielectric absorption test (DA ratio); check for moisture contamination', ref: 'IEEE 43' },
+    ]
+  },
+  vibration: {
+    title: 'Excessive Vibration — Root Cause Checklist',
+    color: 'hdr-amber',
+    icon: '〰️',
+    checks: [
+      { cat: 'Balance', item: 'Rotor dynamic balance — NEMA MG1-7.6 max 0.15 in/sec velocity (1800 RPM)', ref: 'MG1-7.6' },
+      { cat: 'Alignment', item: 'Shaft alignment — angular & parallel; check per ANSI/ASA S2.75', ref: 'ANSI S2.75' },
+      { cat: 'Coupling', item: 'Coupling wear, rubber element degradation, key backlash', ref: 'Mfr. Data' },
+      { cat: 'Bearing', item: 'Bearing defect frequency analysis (BPFI, BPFO, BSF, FTF) via FFT', ref: 'ISO 10816' },
+      { cat: 'Foundation', item: 'Soft foot condition — check all mounting points ≤ 0.002" feeler gauge', ref: 'NEMA' },
+      { cat: 'Resonance', item: 'Natural frequency of structure near 1X or 2X run speed? Perform bump test', ref: 'ISO 10816' },
+      { cat: 'Rotor', item: 'Broken rotor bar (1X sidebands at ±2sf in spectrum); perform MCSA', ref: 'IEEE 1415' },
+      { cat: 'Magnetic', item: '2X line frequency (120 Hz) vibration — loose laminations, uneven airgap', ref: 'MG1-7' },
+    ]
+  },
+  bearing: {
+    title: 'Bearing Failure — Root Cause Checklist',
+    color: 'hdr-cyan',
+    icon: '⚙️',
+    checks: [
+      { cat: 'VFD/EDM', item: 'VFD bearing currents (EDM) — look for frosted/fluted raceway; install shaft grounding ring', ref: 'MG1-31.4.3' },
+      { cat: 'Lubrication', item: 'Over/under lubrication; check grease type compatibility (lithium vs polyurea); relubrication interval per frame', ref: 'Mfr. Guide' },
+      { cat: 'Contamination', item: 'Moisture ingress — corrosion pitting; check seal integrity and IP rating adequacy', ref: 'IEC 60529' },
+      { cat: 'Overload', item: 'Overhung load exceeds nameplate? Calculate actual vs allowable per frame size', ref: 'MG1-4.6' },
+      { cat: 'Misalignment', item: 'Misalignment-induced radial preload — measure housing bore runout & shaft runout', ref: 'ANSI S2.75' },
+      { cat: 'Fit', item: 'Bearing fit — check housing bore and shaft journal dims per ISO fit recommendation', ref: 'ISO 281' },
+      { cat: 'Preload', item: 'Excessive axial preload from coupled machine thermal expansion; check coupling float', ref: 'Mfr. Data' },
+      { cat: 'Selection', item: 'Bearing L10 life calculation — verify C/P ratio ≥ design life requirement', ref: 'ISO 281' },
+    ]
+  },
+  starting: {
+    title: 'Starting Failure — Root Cause Checklist',
+    color: 'hdr-blue',
+    icon: '⚡',
+    checks: [
+      { cat: 'Voltage', item: 'Terminal voltage during start — must maintain ≥ 90% nominal; check cable voltage drop', ref: 'MG1-12.43' },
+      { cat: 'LRC', item: 'Locked rotor current vs system capacity — Design B = 600% FLA typical; check breaker/fuse sizing', ref: 'MG1-12.35' },
+      { cat: 'Load Torque', item: 'Breakaway torque of driven load vs motor locked rotor torque (LRT ≥ 150% FLT for Design B)', ref: 'MG1-12.38' },
+      { cat: 'Starter', item: 'Soft starter/reduced voltage — verify bypass contactor functioning; check ramp time vs load', ref: 'NEMA ICS' },
+      { cat: 'Winding', item: 'Verify correct connection (Wye/Delta) for dual-voltage motor at applied voltage', ref: 'MG1-2' },
+      { cat: 'Rotor', item: 'Broken rotor bars reduce starting torque — run MCSA or impedance test at standstill', ref: 'IEEE 1415' },
+      { cat: 'VFD', item: 'VFD torque boost setting — constant torque loads need IR compensation tuned correctly', ref: 'MG1-31' },
+    ]
+  },
+  insulation: {
+    title: 'Insulation Failure — Root Cause Checklist',
+    color: 'hdr-red',
+    icon: '🛡️',
+    checks: [
+      { cat: 'Thermal Age', item: 'Arrhenius degradation — insulation life halves every 10°C above rating; review temp history', ref: 'IEEE 117' },
+      { cat: 'VFD dV/dt', item: 'Inverter voltage spikes exceeding 2× DC bus — measure peak voltage at motor terminals vs insulation rating', ref: 'MG1-31.4.4' },
+      { cat: 'Moisture', item: 'PI (polarization index) < 2.0 = moisture suspect; DA ratio < 1.25 = poor; megger at 500V/1000V', ref: 'IEEE 43' },
+      { cat: 'Contamination', item: 'Oil, dust, chemical contamination tracking current to ground — inspect end bells', ref: 'MG1-10' },
+      { cat: 'Partial Discharge', item: 'Form-wound coils — PD activity > 3000 pC indicates imminent failure in MV motors', ref: 'IEC 60034-27' },
+      { cat: 'Mechanical', item: 'Coil abrasion from vibration — look for coil movement, bracing failure in end turns', ref: 'Mfr. Data' },
+      { cat: 'Turn-to-Turn', item: 'Surge test to detect inter-turn shorts — use Baker instrument per IEEE 522', ref: 'IEEE 522' },
+    ]
+  },
+  vfd: {
+    title: 'VFD Compatibility Issues — Root Cause Checklist',
+    color: 'hdr-cyan',
+    icon: '📡',
+    checks: [
+      { cat: 'Voltage Spike', item: 'Reflected wave voltage — cables > 50 ft (15m) can double DC bus voltage at motor; use output reactor or dV/dt filter', ref: 'MG1-31.4.4' },
+      { cat: 'Motor Rating', item: 'Motor must be MG1 Part 31 Inverter Duty rated for VFD service; check nameplate', ref: 'MG1-31.1' },
+      { cat: 'Insulation', item: 'Standard insulation (680V NEMA) may be insufficient; inverter duty = 1600V peak rated', ref: 'MG1-31.4' },
+      { cat: 'Bearing Currents', item: 'Common mode currents via capacitive coupling — install insulated bearing (DE) and shaft grounding ring', ref: 'MG1-31.4.3' },
+      { cat: 'Derating', item: 'Speed range derating — check mfr. speed-torque capability curve for constant torque loads', ref: 'MG1-31.4.4' },
+      { cat: 'Service Factor', item: 'VFD service = SF 1.0 always; additional thermal stress from harmonics reduces effective SF', ref: 'MG1-31' },
+      { cat: 'Carrier Freq', item: 'Higher carrier frequency reduces audible noise but increases heat; derate accordingly', ref: 'MG1-31' },
+      { cat: 'EMI', item: 'Check proper shielded cable, cable routing separation (power vs signal), and grounding practices', ref: 'NEMA ICS' },
+    ]
+  }
+};
+
+function loadDiag(type) {
+  const d = DIAG_DATA[type];
+  const result = document.getElementById('diagResult');
+  result.classList.add('visible');
+
+  let rows = d.checks.map(c => `
+    <tr>
+      <td style="font-family:var(--mono);font-size:10px;color:var(--text-dim);white-space:nowrap;padding:6px 8px;">${c.cat}</td>
+      <td style="font-size:12px;padding:6px 8px;">${c.item}</td>
+      <td style="font-family:var(--mono);font-size:10px;white-space:nowrap;padding:6px 8px;" class="val">${c.ref}</td>
+      <td style="padding:6px 8px;">
+        <select style="background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:3px;color:var(--text-secondary);font-family:var(--mono);font-size:10px;padding:3px 6px;outline:none;">
+          <option>— Check</option>
+          <option style="color:var(--green)">✓ OK</option>
+          <option style="color:var(--amber)">⚠ Suspect</option>
+          <option style="color:var(--red)">✗ Failed</option>
+          <option>N/A</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+
+  result.innerHTML = `
+    <div class="resp-section-hdr ${d.color}" style="margin-bottom:12px;font-family:var(--condensed);font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px;">
+      <span>${d.icon}</span><span>${d.title}</span>
+    </div>
+    <table class="data-table" style="font-size:12px;">
+      <tr>
+        <th style="width:80px;">Category</th>
+        <th>Check Item</th>
+        <th style="width:100px;">Reference</th>
+        <th style="width:110px;">Status</th>
+      </tr>
+      ${rows}
+    </table>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+      <button onclick="askDiagQuestion('${type}')" style="background:linear-gradient(135deg,var(--amber-dim),var(--amber));border:none;border-radius:4px;color:var(--bg-void);font-family:var(--condensed);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 16px;cursor:pointer;">
+        🤖 Ask AI for Deep Analysis
+      </button>
+      <span style="font-size:11px;color:var(--text-dim);">Opens AI chat with diagnostic context pre-loaded</span>
+    </div>
+  `;
+  result.scrollIntoView({ behavior: 'smooth' });
+}
+
+function askDiagQuestion(type) {
+  const labels = {
+    overtemp: 'overtemperature failure',
+    vibration: 'excessive vibration',
+    bearing: 'bearing failure',
+    starting: 'starting failure / low starting torque',
+    insulation: 'insulation failure / winding fault',
+    vfd: 'VFD compatibility issues and inverter-related failures'
+  };
+  const q = `Provide a detailed root cause analysis and corrective action plan for ${labels[type]} in the motor described in my parameters. Reference specific NEMA MG1 clauses, IEC standards, and manufacturer-specific design considerations for WEG and Marathon motors. Include design modifications that go beyond standard replacement recommendations.`;
+  // Switch to chat
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.tab').classList.add('active');
+  document.getElementById('tab-chat').classList.add('active');
+  sendMessage(q);
+}
+</script>
+</body>
+</html>
